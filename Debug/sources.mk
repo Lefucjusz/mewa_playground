@@ -27,5 +27,9 @@ Bsp/tca9548a \
 Core/Src \
 Core/Startup \
 Drivers/STM32H7xx_HAL_Driver/Src \
+FATFS/App \
+FATFS/Target \
 Logger \
+Middlewares/Third_Party/FatFs/src \
+Middlewares/Third_Party/FatFs/src/option \
 

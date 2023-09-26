@@ -5,38 +5,26 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../Core/Src/main.c \
-../Core/Src/stm32h7xx_hal_msp.c \
-../Core/Src/stm32h7xx_it.c \
-../Core/Src/syscalls.c \
-../Core/Src/sysmem.c \
-../Core/Src/system_stm32h7xx.c 
+../Middlewares/Third_Party/FatFs/src/option/ccsbcs.c \
+../Middlewares/Third_Party/FatFs/src/option/syscall.c 
 
 OBJS += \
-./Core/Src/main.o \
-./Core/Src/stm32h7xx_hal_msp.o \
-./Core/Src/stm32h7xx_it.o \
-./Core/Src/syscalls.o \
-./Core/Src/sysmem.o \
-./Core/Src/system_stm32h7xx.o 
+./Middlewares/Third_Party/FatFs/src/option/ccsbcs.o \
+./Middlewares/Third_Party/FatFs/src/option/syscall.o 
 
 C_DEPS += \
-./Core/Src/main.d \
-./Core/Src/stm32h7xx_hal_msp.d \
-./Core/Src/stm32h7xx_it.d \
-./Core/Src/syscalls.d \
-./Core/Src/sysmem.d \
-./Core/Src/system_stm32h7xx.d 
+./Middlewares/Third_Party/FatFs/src/option/ccsbcs.d \
+./Middlewares/Third_Party/FatFs/src/option/syscall.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
-Core/Src/%.o Core/Src/%.su: ../Core/Src/%.c Core/Src/subdir.mk
+Middlewares/Third_Party/FatFs/src/option/%.o Middlewares/Third_Party/FatFs/src/option/%.su: ../Middlewares/Third_Party/FatFs/src/option/%.c Middlewares/Third_Party/FatFs/src/option/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m7 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32H743xx -c -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../Drivers/CMSIS/Include -I"/home/lefucjusz/STM32CubeIDE/workspace_1.11.2/mewa_playground/Bsp/tca9548a" -I"/home/lefucjusz/STM32CubeIDE/workspace_1.11.2/mewa_playground/Bsp/ssd1306" -I"/home/lefucjusz/STM32CubeIDE/workspace_1.11.2/mewa_playground/Logger" -I"/home/lefucjusz/STM32CubeIDE/workspace_1.11.2/mewa_playground/Bsp/cs4270" -I../FATFS/Target -I../FATFS/App -I../Middlewares/Third_Party/FatFs/src -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -o "$@"
 
-clean: clean-Core-2f-Src
+clean: clean-Middlewares-2f-Third_Party-2f-FatFs-2f-src-2f-option
 
-clean-Core-2f-Src:
-	-$(RM) ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/stm32h7xx_hal_msp.d ./Core/Src/stm32h7xx_hal_msp.o ./Core/Src/stm32h7xx_hal_msp.su ./Core/Src/stm32h7xx_it.d ./Core/Src/stm32h7xx_it.o ./Core/Src/stm32h7xx_it.su ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32h7xx.d ./Core/Src/system_stm32h7xx.o ./Core/Src/system_stm32h7xx.su
+clean-Middlewares-2f-Third_Party-2f-FatFs-2f-src-2f-option:
+	-$(RM) ./Middlewares/Third_Party/FatFs/src/option/ccsbcs.d ./Middlewares/Third_Party/FatFs/src/option/ccsbcs.o ./Middlewares/Third_Party/FatFs/src/option/ccsbcs.su ./Middlewares/Third_Party/FatFs/src/option/syscall.d ./Middlewares/Third_Party/FatFs/src/option/syscall.o ./Middlewares/Third_Party/FatFs/src/option/syscall.su
 
-.PHONY: clean-Core-2f-Src
+.PHONY: clean-Middlewares-2f-Third_Party-2f-FatFs-2f-src-2f-option
 

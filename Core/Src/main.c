@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -26,6 +27,7 @@
 #include "ssd1306.h"
 #include "logger.h"
 #include "cs4270.h"
+#include "fatfs.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -61,19 +63,30 @@ I2C_HandleTypeDef hi2c1;
 I2S_HandleTypeDef hi2s1;
 DMA_HandleTypeDef hdma_spi1_tx;
 
+SD_HandleTypeDef hsd1;
+
 SDRAM_HandleTypeDef hsdram1;
 
 /* USER CODE BEGIN PV */
-static int16_t __attribute__((section(".sdram"))) audio_data[2 * 4800];
+
+static FATFS __attribute__((section(".sdram"))) fatfs;
+
+static int16_t __attribute__((section(".sdram"))) audio_buffer[2 * 16384];
+
+static volatile bool first_half = false;
+static volatile bool second_half = false;
+
+//static int16_t __attribute__((section(".sdram"))) audio_data[2 * 4800];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
-static void MX_I2C1_Init(void);
 static void MX_FMC_Init(void);
 static void MX_I2S1_Init(void);
+static void MX_SDMMC1_SD_Init(void);
+static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
 static void SDRAM_Init(void);
 /* USER CODE END PFP */
@@ -112,27 +125,119 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_I2C1_Init();
   MX_FMC_Init();
   MX_I2S1_Init();
+  MX_SDMMC1_SD_Init();
+  MX_I2C1_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   tca9548a_init(&hi2c1, 0);
   tca9548a_switch_to(1);
   ssd1306_Init();
   logger_init();
 
-  bool status = cs4270_init(&hi2c1, 0);
-  logger_log("codec status: %d", status);
+  bool codec_ret = cs4270_init(&hi2c1, 0);
 
-  for (size_t i = 0; i < 4800; ++i) {
-	  int16_t val = (int16_t)(16834.0f * sin(2.0f * M_PI * 100.0f * i / 48000.0f));
-	  audio_data[2 * i] = val;
-	  audio_data[2 * i + 1] = val;
+  cs4270_set_attenuation(24);
+
+  logger_log("Codec %s", codec_ret ? "OK" : "fail");
+
+  const char *const mount_point = "";
+  const char *const file_path = "01. A Gallant Gentleman.wav";
+
+  FRESULT ret;
+  FIL f;
+
+  logger_log("Mounting SD card...");
+
+  ret = f_mount(&fatfs, mount_point, 1);
+  if (ret) {
+	  logger_log("Failed");
+	  while(1);
   }
 
-  HAL_StatusTypeDef st = HAL_I2S_Transmit_DMA(&hi2s1, (uint16_t*)audio_data, sizeof(audio_data)/sizeof(audio_data[0]));
+  logger_log("Opening %s...", file_path);
+  ret = f_open(&f, file_path, FA_READ);
+  if (ret) {
+	  logger_log("Failed");
+	  while(1);
+  }
 
-  logger_log("DMA status: %d", st);
+  logger_log("Reading file...");
+  const size_t file_size = f_size(&f);
+  logger_log("File size: %uB", file_size);
+
+//  size_t seek_val = file_size * 0.7;
+//  if (seek_val & 1) {
+//	  seek_val++;
+//  }
+//
+//  f_lseek(&f, seek_val);
+
+  logger_log("Filling buffer...");
+  size_t bytes_read;
+  ret = f_read(&f, audio_buffer, 2 * 16384 * sizeof(audio_buffer[0]), &bytes_read);
+  if (ret) {
+  	  logger_log("Failed");
+  	  while(1);
+  }
+
+  HAL_I2S_Transmit_DMA(&hi2s1, (uint16_t *)audio_buffer, sizeof(audio_buffer)/sizeof(audio_buffer[0]));
+
+  logger_log("Playing");
+
+  while (1) {
+	  if (first_half) {
+		  first_half = false;
+		  f_read(&f, audio_buffer, 16384 * sizeof(audio_buffer[0]), &bytes_read);
+	  }
+
+	  if (second_half) {
+		  second_half = false;
+		  f_read(&f, &audio_buffer[16384], 16384 * sizeof(audio_buffer[0]), &bytes_read);
+	  }
+
+	  if (bytes_read == 0) {
+		  break;
+	  }
+  }
+
+  HAL_I2S_DMAStop(&hi2s1);
+  logger_log("Playback done");
+
+  logger_log("Closing %s...", file_path);
+  ret = f_close(&f);
+  if (ret) {
+      logger_log("Failed");
+      while(1);
+  }
+
+  logger_log("Unmounting SD card...");
+  ret = f_mount(0, mount_point, 0);
+  if (ret) {
+      logger_log("Failed");
+      while(1);
+  }
+
+  logger_log("Success!");
+
+
+//  bool status = cs4270_init(&hi2c1, 0);
+//  logger_log("codec status: %d", status);
+//
+//  for (size_t i = 0; i < 4800; ++i) {
+//	  int16_t val = (int16_t)(32767.0f * sin(2.0f * M_PI * 8000.0f * i / 48000.0f));
+//	  audio_data[2 * i] = val;
+//	  audio_data[2 * i + 1] = val;
+//  }
+//
+//  HAL_StatusTypeDef st = HAL_I2S_Transmit_DMA(&hi2s1, (uint16_t*)audio_data, sizeof(audio_data)/sizeof(audio_data[0]));
+//
+//  logger_log("DMA status: %d", st);
+//
+//  HAL_Delay(1000);
+//
+//  cs4270_set_volume(100);
 
   /* USER CODE END 2 */
 
@@ -175,16 +280,14 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_CSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.CSIState = RCC_CSI_ON;
-  RCC_OscInitStruct.CSICalibrationValue = RCC_CSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 1;
   RCC_OscInitStruct.PLL.PLLN = 23;
   RCC_OscInitStruct.PLL.PLLP = 2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
+  RCC_OscInitStruct.PLL.PLLQ = 18;
   RCC_OscInitStruct.PLL.PLLR = 2;
   RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
   RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
@@ -202,10 +305,10 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV1;
-  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV1;
+  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
+  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
@@ -229,7 +332,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x00000004;
+  hi2c1.Init.Timing = 0x00301739;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -298,6 +401,33 @@ static void MX_I2S1_Init(void)
 }
 
 /**
+  * @brief SDMMC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SDMMC1_SD_Init(void)
+{
+
+  /* USER CODE BEGIN SDMMC1_Init 0 */
+
+  /* USER CODE END SDMMC1_Init 0 */
+
+  /* USER CODE BEGIN SDMMC1_Init 1 */
+
+  /* USER CODE END SDMMC1_Init 1 */
+  hsd1.Instance = SDMMC1;
+  hsd1.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
+  hsd1.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
+  hsd1.Init.BusWide = SDMMC_BUS_WIDE_1B;
+  hsd1.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
+  hsd1.Init.ClockDiv = 0;
+  /* USER CODE BEGIN SDMMC1_Init 2 */
+
+  /* USER CODE END SDMMC1_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -310,9 +440,6 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
-  /* DMAMUX1_OVR_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMAMUX1_OVR_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMAMUX1_OVR_IRQn);
 
 }
 
@@ -386,9 +513,6 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(CS4270_NRESET_GPIO_Port, CS4270_NRESET_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(DBG_PAD1_GPIO_Port, DBG_PAD1_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(TCA9548A_NRESET_GPIO_Port, TCA9548A_NRESET_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : CS4270_NRESET_Pin */
@@ -400,9 +524,8 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : DBG_PAD1_Pin */
   GPIO_InitStruct.Pin = DBG_PAD1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(DBG_PAD1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TCA9548A_NRESET_Pin */
@@ -481,12 +604,12 @@ static void SDRAM_Init(void)
 // TODO this shouldn't be here
 void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-//    logger_log("half sent");
+	first_half = true;
 }
 
 void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
 {
-//	logger_log("full sent");
+	second_half = true;
 }
 
 /* USER CODE END 4 */
