@@ -36,7 +36,7 @@ bool cs4270_init(I2C_HandleTypeDef *hi2c1, uint8_t address)
 	HAL_StatusTypeDef i2c_status;
 	uint8_t reg_value;
 
-	ctx.i2c = hi2c1;
+	ctx.i2c = hi2c1; // TODO this should not be stored in driver
 	ctx.address = ((CS4270_FIXED_ADDRESS | address) << 1);
 
 	/* Reset the chip */

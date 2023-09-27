@@ -44,6 +44,8 @@
 void cs4270_reset(void);
 bool cs4270_init(I2C_HandleTypeDef *hi2c1, uint8_t address);
 
+// TODO add mute, deinit, change percent volume control
+
 uint8_t cs4270_get_id(void);
 uint8_t cs4270_get_revision(void);
 

@@ -26,8 +26,8 @@
 #include "tca9548a.h"
 #include "ssd1306.h"
 #include "logger.h"
-#include "cs4270.h"
 #include "fatfs.h"
+#include "player.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,24 +72,17 @@ SDRAM_HandleTypeDef hsdram1;
 
 static FATFS __attribute__((section(".sdram"))) fatfs;
 
-static int16_t __attribute__((section(".sdram"))) audio_buffer[2 * 16384];
-
-static volatile bool first_half = false;
-static volatile bool second_half = false;
-
-//static int16_t __attribute__((section(".sdram"))) audio_data[2 * 4800];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_MDMA_Init(void);
-static void MX_I2S1_Init(void);
-static void MX_SDMMC1_SD_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_FMC_Init(void);
+static void MX_I2S1_Init(void);
+static void MX_SDMMC1_SD_Init(void);
 /* USER CODE BEGIN PFP */
 static void SDRAM_Init(void);
 /* USER CODE END PFP */
@@ -109,6 +102,9 @@ int main(void)
 
   /* USER CODE END 1 */
 
+  /* Enable I-Cache---------------------------------------------------------*/
+  SCB_EnableICache();
+
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -121,9 +117,6 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 
-/* Configure the peripherals common clocks */
-  PeriphCommonClock_Config();
-
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
@@ -132,10 +125,10 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_MDMA_Init();
-  MX_I2S1_Init();
-  MX_SDMMC1_SD_Init();
   MX_I2C1_Init();
   MX_FMC_Init();
+  MX_I2S1_Init();
+  MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   tca9548a_init(&hi2c1, 0);
@@ -143,80 +136,33 @@ int main(void)
   ssd1306_Init();
   logger_init();
 
-  bool codec_ret = cs4270_init(&hi2c1, 0);
-
-  cs4270_set_attenuation(24);
-
-  logger_log("Codec %s", codec_ret ? "OK" : "fail");
+  /* Configs for sample rates:
+   * 44.1kHz - N=36, P=5, frac=6144
+   * 48kHz - N=16, P=2, frac=0
+   */
 
   const char *const mount_point = "";
-  const char *const file_path = "01. A Gallant Gentleman.wav";
+  const char *const file_path = "04 - Wasting time.mp3";
 
   FRESULT ret;
-  FIL f;
 
   logger_log("Mounting SD card...");
 
   ret = f_mount(&fatfs, mount_point, 1);
   if (ret) {
-	  logger_log("Failed");
+	  logger_log("Failed %d", ret);
 	  while(1);
   }
 
-  logger_log("Opening %s...", file_path);
-  ret = f_open(&f, file_path, FA_READ);
-  if (ret) {
-	  logger_log("Failed");
-	  while(1);
-  }
 
-  logger_log("Reading file...");
-  const size_t file_size = f_size(&f);
-  logger_log("File size: %uB", file_size);
+  player_init(&hi2s1, &hi2c1, NULL);
 
-//  size_t seek_val = file_size * 0.7;
-//  if (seek_val & 1) {
-//	  seek_val++;
-//  }
-//
-//  f_lseek(&f, seek_val);
+  bool status = player_start(file_path);
 
-  logger_log("Filling buffer...");
-  size_t bytes_read;
-  ret = f_read(&f, audio_buffer, 2 * 16384 * sizeof(audio_buffer[0]), &bytes_read);
-  if (ret) {
-  	  logger_log("Failed");
-  	  while(1);
-  }
+  logger_log("ret: %d", status);
 
-  HAL_I2S_Transmit_DMA(&hi2s1, (uint16_t *)audio_buffer, sizeof(audio_buffer)/sizeof(audio_buffer[0]));
-
-  logger_log("Playing");
-
-  while (1) {
-	  if (first_half) {
-		  first_half = false;
-		  f_read(&f, audio_buffer, 16384 * sizeof(audio_buffer[0]), &bytes_read);
-	  }
-
-	  if (second_half) {
-		  second_half = false;
-		  f_read(&f, &audio_buffer[16384], 16384 * sizeof(audio_buffer[0]), &bytes_read);
-	  }
-
-	  if (bytes_read == 0) {
-		  break;
-	  }
-  }
-
-  HAL_I2S_DMAStop(&hi2s1);
-  logger_log("Playback done");
-
-  logger_log("Closing %s...", file_path);
-  ret = f_close(&f);
-  if (ret) {
-      logger_log("Failed");
-      while(1);
+  while (player_get_state() != PLAYER_STOPPED) {
+	  player_task();
   }
 
   logger_log("Unmounting SD card...");
@@ -228,32 +174,12 @@ int main(void)
 
   logger_log("Success!");
 
-
-//  bool status = cs4270_init(&hi2c1, 0);
-//  logger_log("codec status: %d", status);
-//
-//  for (size_t i = 0; i < 4800; ++i) {
-//	  int16_t val = (int16_t)(32767.0f * sin(2.0f * M_PI * 8000.0f * i / 48000.0f));
-//	  audio_data[2 * i] = val;
-//	  audio_data[2 * i + 1] = val;
-//  }
-//
-//  HAL_StatusTypeDef st = HAL_I2S_Transmit_DMA(&hi2s1, (uint16_t*)audio_data, sizeof(audio_data)/sizeof(audio_data[0]));
-//
-//  logger_log("DMA status: %d", st);
-//
-//  HAL_Delay(1000);
-//
-//  cs4270_set_volume(100);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  static int cnt = 10000;
-//	  logger_log("Logger test: %d", cnt--);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -311,40 +237,13 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
   RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-}
-
-/**
-  * @brief Peripherals Common Clock Configuration
-  * @retval None
-  */
-void PeriphCommonClock_Config(void)
-{
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-
-  /** Initializes the peripherals clock
-  */
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FMC|RCC_PERIPHCLK_SPI1;
-  PeriphClkInitStruct.PLL2.PLL2M = 1;
-  PeriphClkInitStruct.PLL2.PLL2N = 16;
-  PeriphClkInitStruct.PLL2.PLL2P = 4;
-  PeriphClkInitStruct.PLL2.PLL2Q = 2;
-  PeriphClkInitStruct.PLL2.PLL2R = 1;
-  PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
-  PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
-  PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
-  PeriphClkInitStruct.FmcClockSelection = RCC_FMCCLKSOURCE_PLL2;
-  PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL2;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -366,7 +265,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x00301739;
+  hi2c1.Init.Timing = 0x00702681;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -418,7 +317,7 @@ static void MX_I2S1_Init(void)
   hi2s1.Init.Standard = I2S_STANDARD_PHILIPS;
   hi2s1.Init.DataFormat = I2S_DATAFORMAT_16B;
   hi2s1.Init.MCLKOutput = I2S_MCLKOUTPUT_ENABLE;
-  hi2s1.Init.AudioFreq = I2S_AUDIOFREQ_48K;
+  hi2s1.Init.AudioFreq = I2S_AUDIOFREQ_44K;
   hi2s1.Init.CPOL = I2S_CPOL_LOW;
   hi2s1.Init.FirstBit = I2S_FIRSTBIT_MSB;
   hi2s1.Init.WSInversion = I2S_WS_INVERSION_DISABLE;
@@ -553,11 +452,11 @@ static void MX_FMC_Init(void)
   hsdram1.Init.ReadBurst = FMC_SDRAM_RBURST_ENABLE;
   hsdram1.Init.ReadPipeDelay = FMC_SDRAM_RPIPE_DELAY_0;
   /* SdramTiming */
-  SdramTiming.LoadToActiveDelay = 2;
-  SdramTiming.ExitSelfRefreshDelay = 7;
-  SdramTiming.SelfRefreshTime = 5;
-  SdramTiming.RowCycleDelay = 6;
-  SdramTiming.WriteRecoveryTime = 3;
+  SdramTiming.LoadToActiveDelay = 1;
+  SdramTiming.ExitSelfRefreshDelay = 5;
+  SdramTiming.SelfRefreshTime = 4;
+  SdramTiming.RowCycleDelay = 5;
+  SdramTiming.WriteRecoveryTime = 2;
   SdramTiming.RPDelay = 2;
   SdramTiming.RCDDelay = 2;
 
@@ -565,6 +464,8 @@ static void MX_FMC_Init(void)
   {
     Error_Handler( );
   }
+
+  HAL_SetFMCMemorySwappingConfig(FMC_SWAPBMAP_SDRAM_SRAM);
 
   /* USER CODE BEGIN FMC_Init 2 */
   SDRAM_Init();
@@ -624,13 +525,14 @@ static void SDRAM_Init(void)
 {
 	FMC_SDRAM_CommandTypeDef cmd = {0};
 	HAL_StatusTypeDef status = HAL_OK;
+	const uint32_t command_timeout = 0x8000;
 
 	/* Send clock configuration enable command */
 	cmd.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
 	cmd.CommandMode = FMC_SDRAM_CMD_CLK_ENABLE;
 	cmd.AutoRefreshNumber = 1;
 	cmd.ModeRegisterDefinition = 0;
-	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, 0xFFFF); // TODO magic number
+	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, command_timeout);
 	if (status != HAL_OK) {
 		Error_Handler();
 	}
@@ -643,7 +545,7 @@ static void SDRAM_Init(void)
 	cmd.CommandMode = FMC_SDRAM_CMD_PALL;
 	cmd.AutoRefreshNumber = 1;
 	cmd.ModeRegisterDefinition = 0;
-	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, 0xFFFF); // TODO magic number
+	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, command_timeout);
 	if (status != HAL_OK) {
 		Error_Handler();
 	}
@@ -653,7 +555,7 @@ static void SDRAM_Init(void)
 	cmd.CommandMode = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
 	cmd.AutoRefreshNumber = 8;
 	cmd.ModeRegisterDefinition = 0;
-	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, 0xFFFF); // TODO magic number
+	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, command_timeout);
 	if (status != HAL_OK) {
 		Error_Handler();
 	}
@@ -667,7 +569,7 @@ static void SDRAM_Init(void)
 								 SDRAM_MODEREG_CAS_LATENCY_2 |
 								 SDRAM_MODEREG_OPERATING_MODE_STANDARD |
 								 SDRAM_MODEREG_WRITEBURST_MODE_SINGLE);
-	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, 0xFFFF); // TODO magic number
+	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, command_timeout);
 	if (status != HAL_OK) {
 		Error_Handler();
 	}
@@ -680,17 +582,6 @@ static void SDRAM_Init(void)
 	if (status != HAL_OK) {
 		Error_Handler();
 	}
-}
-
-// TODO this shouldn't be here
-void HAL_I2S_TxHalfCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-	first_half = true;
-}
-
-void HAL_I2S_TxCpltCallback(I2S_HandleTypeDef *hi2s)
-{
-	second_half = true;
 }
 
 /* USER CODE END 4 */
