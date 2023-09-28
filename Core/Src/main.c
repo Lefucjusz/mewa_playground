@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdbool.h>
+#include "sdram.h"
 #include "tca9548a.h"
 #include "ssd1306.h"
 #include "logger.h"
@@ -37,17 +38,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define SDRAM_MODEREG_BURST_LENGTH_1             ((uint16_t)0x0000)
-#define SDRAM_MODEREG_BURST_LENGTH_2             ((uint16_t)0x0001)
-#define SDRAM_MODEREG_BURST_LENGTH_4             ((uint16_t)0x0002)
-#define SDRAM_MODEREG_BURST_LENGTH_8             ((uint16_t)0x0003)
-#define SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL      ((uint16_t)0x0000)
-#define SDRAM_MODEREG_BURST_TYPE_INTERLEAVED     ((uint16_t)0x0008)
-#define SDRAM_MODEREG_CAS_LATENCY_2              ((uint16_t)0x0020)
-#define SDRAM_MODEREG_CAS_LATENCY_3              ((uint16_t)0x0030)
-#define SDRAM_MODEREG_OPERATING_MODE_STANDARD    ((uint16_t)0x0000)
-#define SDRAM_MODEREG_WRITEBURST_MODE_PROGRAMMED ((uint16_t)0x0000)
-#define SDRAM_MODEREG_WRITEBURST_MODE_SINGLE     ((uint16_t)0x0200)
 
 /* USER CODE END PD */
 
@@ -84,7 +74,7 @@ static void MX_FMC_Init(void);
 static void MX_I2S1_Init(void);
 static void MX_SDMMC1_SD_Init(void);
 /* USER CODE BEGIN PFP */
-static void SDRAM_Init(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -142,7 +132,7 @@ int main(void)
    */
 
   const char *const mount_point = "";
-  const char *const file_path = "04 - Wasting time.mp3";
+  const char *const file_path = "01 - Deadwing.mp3";
 
   FRESULT ret;
 
@@ -153,7 +143,6 @@ int main(void)
 	  logger_log("Failed %d", ret);
 	  while(1);
   }
-
 
   player_init(&hi2s1, &hi2c1, NULL);
 
@@ -468,7 +457,7 @@ static void MX_FMC_Init(void)
   HAL_SetFMCMemorySwappingConfig(FMC_SWAPBMAP_SDRAM_SRAM);
 
   /* USER CODE BEGIN FMC_Init 2 */
-  SDRAM_Init();
+  sdram_init(&hsdram1);
   /* USER CODE END FMC_Init 2 */
 }
 
@@ -520,69 +509,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-static void SDRAM_Init(void)
-{
-	FMC_SDRAM_CommandTypeDef cmd = {0};
-	HAL_StatusTypeDef status = HAL_OK;
-	const uint32_t command_timeout = 0x8000;
-
-	/* Send clock configuration enable command */
-	cmd.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
-	cmd.CommandMode = FMC_SDRAM_CMD_CLK_ENABLE;
-	cmd.AutoRefreshNumber = 1;
-	cmd.ModeRegisterDefinition = 0;
-	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, command_timeout);
-	if (status != HAL_OK) {
-		Error_Handler();
-	}
-
-	/* Wait for at least 100us */
-	HAL_Delay(1);
-
-	/* Send Precharge All command */
-	cmd.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
-	cmd.CommandMode = FMC_SDRAM_CMD_PALL;
-	cmd.AutoRefreshNumber = 1;
-	cmd.ModeRegisterDefinition = 0;
-	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, command_timeout);
-	if (status != HAL_OK) {
-		Error_Handler();
-	}
-
-	/* Send Auto Refresh command 8 times */
-	cmd.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
-	cmd.CommandMode = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
-	cmd.AutoRefreshNumber = 8;
-	cmd.ModeRegisterDefinition = 0;
-	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, command_timeout);
-	if (status != HAL_OK) {
-		Error_Handler();
-	}
-
-	/* Program the external memory mode register */
-	cmd.CommandTarget = FMC_SDRAM_CMD_TARGET_BANK1;
-	cmd.CommandMode = FMC_SDRAM_CMD_LOAD_MODE;
-	cmd.AutoRefreshNumber = 1;
-	cmd.ModeRegisterDefinition = (SDRAM_MODEREG_BURST_LENGTH_1 |
-							 	 SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL |
-								 SDRAM_MODEREG_CAS_LATENCY_2 |
-								 SDRAM_MODEREG_OPERATING_MODE_STANDARD |
-								 SDRAM_MODEREG_WRITEBURST_MODE_SINGLE);
-	status = HAL_SDRAM_SendCommand(&hsdram1, &cmd, command_timeout);
-	if (status != HAL_OK) {
-		Error_Handler();
-	}
-
-	/* Set the rate refresh counter:
-	 * refresh_rate = (FMC_freq * (full_refresh_time / refresh_cycles)) - 20
-	 * refresh_rate = (72MHz * (64ms/8192)) - 20 = (72MHz * 7.8125us) - 20 = 542
-	 *  */
-	status = HAL_SDRAM_ProgramRefreshRate(&hsdram1, 542);
-	if (status != HAL_OK) {
-		Error_Handler();
-	}
-}
 
 /* USER CODE END 4 */
 

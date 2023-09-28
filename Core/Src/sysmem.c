@@ -37,11 +37,10 @@ static uint8_t *__sbrk_heap_end = NULL;
  */
 void *_sbrk(ptrdiff_t incr)
 {
-  uint8_t *prev_heap_end;
-
   extern uint8_t _sdram_heap_start;
   extern uint8_t _sdram_heap_end;
   const uint8_t *max_heap = &_sdram_heap_end;
+  uint8_t *prev_heap_end;
 
   /* Initialize heap end at first call */
   if (NULL == __sbrk_heap_end)

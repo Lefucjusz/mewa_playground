@@ -27,6 +27,19 @@ extern DMA_HandleTypeDef hdma_spi1_tx;
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
+struct pll_config_t
+{
+	uint32_t divn;
+	uint32_t divp;
+	uint32_t fracn;
+};
+
+enum i2s_audio_freq_t
+{
+	FREQ_44K1_BASED,
+	FREQ_48K_BASED,
+	FREQS_NUM
+};
 
 /* USER CODE END TD */
 
@@ -42,12 +55,15 @@ extern DMA_HandleTypeDef hdma_spi1_tx;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+static struct pll_config_t pll_configs[FREQS_NUM] = {
+		{.divn = 36, .divp = 5, .fracn = 6144}, // 44k1-based
+		{.divn = 16, .divp = 2, .fracn = 0} // 48k-based
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-
+static struct pll_config_t *HAL_I2S_GetPllConfig(uint32_t AudioFreq);
 /* USER CODE END PFP */
 
 /* External functions --------------------------------------------------------*/
@@ -166,20 +182,23 @@ void HAL_I2S_MspInit(I2S_HandleTypeDef* hi2s)
   if(hi2s->Instance==SPI1)
   {
   /* USER CODE BEGIN SPI1_MspInit 0 */
-
+    const struct pll_config_t *pll_config = HAL_I2S_GetPllConfig(hi2s->Init.AudioFreq);
+    if (pll_config == NULL) {
+	  Error_Handler();
+    }
   /* USER CODE END SPI1_MspInit 0 */
 
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI1;
     PeriphClkInitStruct.PLL2.PLL2M = 1;
-    PeriphClkInitStruct.PLL2.PLL2N = 36;
-    PeriphClkInitStruct.PLL2.PLL2P = 5;
+    PeriphClkInitStruct.PLL2.PLL2N = pll_config->divn;
+    PeriphClkInitStruct.PLL2.PLL2P = pll_config->divp;
     PeriphClkInitStruct.PLL2.PLL2Q = 2;
     PeriphClkInitStruct.PLL2.PLL2R = 5;
     PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
     PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
-    PeriphClkInitStruct.PLL2.PLL2FRACN = 6144.0;
+    PeriphClkInitStruct.PLL2.PLL2FRACN = pll_config->fracn;
     PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL2;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
@@ -603,5 +622,16 @@ void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){
 }
 
 /* USER CODE BEGIN 1 */
+static struct pll_config_t *HAL_I2S_GetPllConfig(uint32_t AudioFreq)
+{
+	if ((AudioFreq % I2S_AUDIOFREQ_44K) == 0) {
+		return &pll_configs[FREQ_44K1_BASED];
+	}
 
+	if ((AudioFreq % I2S_AUDIOFREQ_48K) == 0) {
+		return &pll_configs[FREQ_48K_BASED];
+	}
+
+	return NULL;
+}
 /* USER CODE END 1 */
