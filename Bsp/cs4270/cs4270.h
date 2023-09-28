@@ -8,7 +8,6 @@
 #pragma once
 
 #include "stm32h7xx_hal.h"
-#include "main.h"
 #include <stdbool.h>
 #include <stdint.h>
 

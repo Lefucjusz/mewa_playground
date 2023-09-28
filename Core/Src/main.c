@@ -25,9 +25,6 @@
 #include <stdbool.h>
 #include "sdram.h"
 #include "tca9548a.h"
-#include "ssd1306.h"
-#include "cs4270.h"
-#include "fatfs.h"
 #include "dir.h"
 #include "keyboard.h"
 #include "display.h"
