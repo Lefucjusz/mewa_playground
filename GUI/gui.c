@@ -159,7 +159,7 @@ static void render_view_playback(gui_refresh_t refresh_mode)
 
 	switch (refresh_mode) {
 		case GUI_REFRESH_ALL: {
-			const char *lines[] = {fno->fname, "", "line_buffer", ""};
+			const char *lines[] = {fno->fname, "", line_buffer, ""};
 			display_set_text_sync(lines, GUI_SCROLL_DELAY);
 		} break;
 
