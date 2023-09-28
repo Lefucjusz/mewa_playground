@@ -26,9 +26,13 @@
 #include "sdram.h"
 #include "tca9548a.h"
 #include "ssd1306.h"
-#include "logger.h"
+#include "cs4270.h"
 #include "fatfs.h"
+#include "dir.h"
+#include "keyboard.h"
+#include "display.h"
 #include "player.h"
+#include "gui.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -89,7 +93,7 @@ static void MX_SDMMC1_SD_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  const char *const mount_point = "/";
   /* USER CODE END 1 */
 
   /* Enable I-Cache---------------------------------------------------------*/
@@ -121,47 +125,29 @@ int main(void)
   MX_SDMMC1_SD_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
-  tca9548a_init(&hi2c1, 0);
-  tca9548a_switch_to(1);
+  tca9548a_init();
+  tca9548a_switch_channel(1);
   ssd1306_Init();
-  logger_init();
 
-  /* Configs for sample rates:
-   * 44.1kHz - N=36, P=5, frac=6144
-   * 48kHz - N=16, P=2, frac=0
-   */
+  cs4270_init();
 
-  const char *const mount_point = "";
-  const char *const file_path = "01 - Deadwing.mp3";
-
-  FRESULT ret;
-
-  logger_log("Mounting SD card...");
-
-  ret = f_mount(&fatfs, mount_point, 1);
+  FRESULT ret = f_mount(&fatfs, mount_point, 1);
   if (ret) {
-	  logger_log("Failed %d", ret);
-	  while(1);
+	  ssd1306_WriteString("SD card mount failed", Font_6x8, White);
+	  ssd1306_UpdateScreen();
+	  while (1);
   }
 
+  dir_init(mount_point);
+  keyboard_init();
+  display_init();
   player_init(&hi2s1, &hi2c1, NULL);
+  gui_init();
 
-  bool status = player_start(file_path);
-
-  logger_log("ret: %d", status);
-
-  while (player_get_state() != PLAYER_STOPPED) {
+  while (1) {
+	  gui_task();
 	  player_task();
   }
-
-  logger_log("Unmounting SD card...");
-  ret = f_mount(0, mount_point, 0);
-  if (ret) {
-      logger_log("Failed");
-      while(1);
-  }
-
-  logger_log("Success!");
 
   /* USER CODE END 2 */
 
@@ -471,12 +457,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
-  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
@@ -485,6 +471,18 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(TCA9548A_NRESET_GPIO_Port, TCA9548A_NRESET_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : KEYBOARD_UP_Pin KEYBOARD_RIGHT_Pin KEYBOARD_DOWN_Pin KEYBOARD_LEFT_Pin */
+  GPIO_InitStruct.Pin = KEYBOARD_UP_Pin|KEYBOARD_RIGHT_Pin|KEYBOARD_DOWN_Pin|KEYBOARD_LEFT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : KEYBOARD_CENTER_Pin */
+  GPIO_InitStruct.Pin = KEYBOARD_CENTER_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(KEYBOARD_CENTER_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : CS4270_NRESET_Pin */
   GPIO_InitStruct.Pin = CS4270_NRESET_Pin;
@@ -505,6 +503,22 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(TCA9548A_NRESET_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 

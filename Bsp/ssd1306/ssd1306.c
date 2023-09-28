@@ -57,7 +57,7 @@ void ssd1306_WriteData(uint8_t* buffer, size_t buff_size) {
 static uint8_t __attribute__((section(".sdram"))) SSD1306_Buffer[SSD1306_BUFFER_SIZE];
 
 // Screen object
-static SSD1306_t __attribute__((section(".sdram"))) SSD1306;
+static SSD1306_t SSD1306;
 
 /* Fills the Screenbuffer with values from a given buffer of a fixed length */
 SSD1306_Error_t ssd1306_FillBuffer(uint8_t* buf, uint32_t len) {
@@ -224,10 +224,12 @@ void ssd1306_DrawPixel(uint8_t x, uint8_t y, SSD1306_COLOR color) {
  */
 char ssd1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color) {
     uint32_t i, b, j;
+    char ch_to_show = ch;
     
     // Check if character is valid
-    if (ch < 32 || ch > 126)
-        return 0;
+    if (ch < 32 || ch > 128) {
+    	ch_to_show = '?'; // Display unknown chars as '?'
+    }
     
     // Check remaining space on current line
     if (SSD1306_WIDTH < (SSD1306.CurrentX + Font.FontWidth) ||
@@ -238,8 +240,8 @@ char ssd1306_WriteChar(char ch, FontDef Font, SSD1306_COLOR color) {
     }
     
     // Use the font to write
-    for(i = 0; i < Font.FontHeight; i++) {
-        b = Font.data[(ch - 32) * Font.FontHeight + i];
+    for (i = 0; i < Font.FontHeight; i++) {
+        b = Font.data[(ch_to_show - 32) * Font.FontHeight + i];
         for(j = 0; j < Font.FontWidth; j++) {
             if((b << j) & 0x8000)  {
                 ssd1306_DrawPixel(SSD1306.CurrentX + j, (SSD1306.CurrentY + i), (SSD1306_COLOR) color);

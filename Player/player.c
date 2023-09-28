@@ -6,6 +6,7 @@
  */
 #define DR_MP3_IMPLEMENTATION
 #define DR_MP3_ONLY_MP3
+
 #include "dr_mp3.h"
 #include "player.h"
 #include "cs4270.h"
@@ -109,8 +110,8 @@ int player_start(const char *path)
 		return -EBUSY;
 	}
 
-	/* Initialize DAC */
-	const bool dac_ret = cs4270_init(ctx.i2c, 0); // TODO proper address
+	/* Unmute DAC */
+	const bool dac_ret = cs4270_mute(false);
 	if (!dac_ret) {
 		drmp3_uninit(&ctx.mp3);
 		return -EBUSY;
@@ -120,14 +121,13 @@ int player_start(const char *path)
 	return 0;
 }
 
-void player_pause(void)  // TODO error handling
+void player_pause(void) // TODO error handling
 {
 	if (ctx.state != PLAYER_PLAYING) {
 		return;
 	}
 
-//	CS43L22_mute(ctx.i2c, true);
-//	CS43L22_power_down(ctx.i2c);
+	cs4270_mute(true);
 	HAL_I2S_DMAPause(ctx.i2s);
 	ctx.state = PLAYER_PAUSED;
 }
@@ -139,8 +139,7 @@ void player_resume(void)
 	}
 
 	HAL_I2S_DMAResume(ctx.i2s);
-//	CS43L22_power_up(ctx.i2c);
-//	CS43L22_mute(ctx.i2c, false);
+	cs4270_mute(false);
 	ctx.state = PLAYER_PLAYING;
 }
 
@@ -150,7 +149,7 @@ void player_stop(void)
 		return;
 	}
 
-//	CS43L22_deinit(ctx.i2c);
+	cs4270_mute(true);
 	HAL_I2S_DMAStop(ctx.i2s);
 	drmp3_uninit(&ctx.mp3);
 
@@ -160,7 +159,7 @@ void player_stop(void)
 
 bool player_set_volume(int8_t volume)
 {
-	return false; //CS43L22_set_volume(ctx.i2c, volume);
+	return cs4270_set_volume(volume);
 }
 
 player_state_t player_get_state(void)

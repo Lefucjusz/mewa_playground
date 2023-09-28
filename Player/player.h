@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include "stm32h7xx_hal.h"
 
-#define PLAYER_BUFFER_SIZE_SAMPLES 16384
+#define PLAYER_BUFFER_SIZE_SAMPLES 32768
 #define PLAYER_CHANNELS_NUM 2
 
 typedef enum {
