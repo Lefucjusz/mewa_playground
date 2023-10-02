@@ -113,8 +113,7 @@ static void render_view_explorer(void)
 {
 	/* Empty directory case */
 	if (ctx.current_dir == NULL) {
-		const char *lines[] = {"Directory is empty!", "", "", ""};
-		display_set_text_sync(lines, GUI_SCROLL_DELAY);
+		display_set_text_sync((const char *[]){"Directory is empty!", "", "", ""}, GUI_SCROLL_DELAY);
 		return;
 	}
 
@@ -159,8 +158,7 @@ static void render_view_playback(gui_refresh_t refresh_mode)
 
 	switch (refresh_mode) {
 		case GUI_REFRESH_ALL: {
-			const char *lines[] = {fno->fname, "", line_buffer, ""};
-			display_set_text_sync(lines, GUI_SCROLL_DELAY);
+			display_set_text_sync((const char *[]){fno->fname, "", line_buffer, ""}, GUI_SCROLL_DELAY);
 		} break;
 
 		case GUI_REFRESH_TIME:
@@ -184,8 +182,7 @@ static void render_view_volume(void)
 	memset(second_line, '#', volume_bar_length);
 	second_line[volume_bar_length] = '\0';
 
-	const char *lines[] = {first_line, second_line, "", ""};
-	display_set_text_sync(lines, GUI_SCROLL_DELAY);
+	display_set_text_sync((const char *[]){first_line, "", second_line, ""}, GUI_SCROLL_DELAY);
 
 	ctx.last_volume_tick = HAL_GetTick();
 }
