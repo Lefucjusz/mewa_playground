@@ -21,6 +21,9 @@
 
 #define KBITS_TO_BYTES(x) ((1000 * (x)) / 8)
 
+#define GUI_EMPTY_BAR_CHAR '-'
+#define GUI_FILLED_BAR_CHAR '#'
+
 typedef enum {
 	GUI_VIEW_EXPLORER,
 	GUI_VIEW_PLAYBACK,
@@ -90,6 +93,13 @@ static void refresh_list(void)
 	ctx.current_dir = ctx.dirs->head;
 }
 
+static void fill_bar_buffer(char *buffer, size_t items_to_fill, size_t items_total)
+{
+	memset(buffer, GUI_FILLED_BAR_CHAR, items_to_fill);
+	memset(&buffer[items_to_fill], GUI_EMPTY_BAR_CHAR, items_total - items_to_fill);
+	buffer[items_total] = '\0';
+}
+
 void start_playback(const char *filename)
 {
 	const char *const fs_path = dir_get_fs_path();
@@ -144,25 +154,36 @@ static void render_view_playback(gui_refresh_t refresh_mode)
 
 	/* Prepare bottom line of the view in buffer */
 	size_t offset;
-	char line_buffer[DISPLAY_LINE_LENGTH + 1];
+	char info_line_buffer[DISPLAY_LINE_LENGTH + 1];
 	const char state_char = (player_get_state() == PLAYER_PLAYING) ? DISPLAY_PLAY_GLYPH : DISPLAY_PAUSE_GLYPH;
 
-	offset = snprintf(line_buffer, sizeof(line_buffer), "%c    %02lu:%02lu", state_char, elapsed_time / GUI_MINS_PER_HOUR, elapsed_time % GUI_MINS_PER_HOUR);
+	offset = snprintf(info_line_buffer, sizeof(info_line_buffer), "%c    %02lu:%02lu", state_char, elapsed_time / GUI_MINS_PER_HOUR, elapsed_time % GUI_MINS_PER_HOUR);
 
 	if (total_time > 0) {
-		snprintf(&line_buffer[offset], sizeof(line_buffer) - offset, "/%02lu:%02lu", total_time / GUI_MINS_PER_HOUR, total_time % GUI_MINS_PER_HOUR);
+		snprintf(&info_line_buffer[offset], sizeof(info_line_buffer) - offset, "/%02lu:%02lu", total_time / GUI_MINS_PER_HOUR, total_time % GUI_MINS_PER_HOUR);
 	}
 	else if (total_time == GUI_BITRATE_VBR) {
-		snprintf(&line_buffer[offset], sizeof(line_buffer) - offset, "/VBR");
+		snprintf(&info_line_buffer[offset], sizeof(info_line_buffer) - offset, "/VBR");
+	}
+
+	/* Prepare song progress bar */
+	char progress_bar_buffer[DISPLAY_LINE_LENGTH + 1];
+	if (total_time > 0) {
+		const size_t progress_bar_length = map(elapsed_time, 0, total_time, 0, DISPLAY_LINE_LENGTH);
+		fill_bar_buffer(progress_bar_buffer, progress_bar_length, DISPLAY_LINE_LENGTH);
+	}
+	else {
+		progress_bar_buffer[0] = '\0'; // Do not display anything
 	}
 
 	switch (refresh_mode) {
-		case GUI_REFRESH_ALL: {
-			display_set_text_sync((const char *[]){fno->fname, "", line_buffer, ""}, GUI_SCROLL_DELAY);
-		} break;
+		case GUI_REFRESH_ALL:
+			display_set_text_sync((const char *[]){fno->fname, "", progress_bar_buffer, info_line_buffer}, GUI_SCROLL_DELAY);
+			break;
 
 		case GUI_REFRESH_TIME:
-			display_set_text(line_buffer, 3, GUI_SCROLL_DELAY);
+			display_set_text(progress_bar_buffer, 3, GUI_SCROLL_DELAY);
+			display_set_text(info_line_buffer, 4, GUI_SCROLL_DELAY);
 			break;
 
 		default:
@@ -179,8 +200,8 @@ static void render_view_volume(void)
 	snprintf(first_line, sizeof(first_line), "Volume level: %ddB", volume_db);
 
 	char second_line[DISPLAY_LINE_LENGTH + 1];
-	memset(second_line, '#', volume_bar_length);
-	second_line[volume_bar_length] = '\0';
+	fill_bar_buffer(second_line, volume_bar_length, DISPLAY_LINE_LENGTH);
+
 
 	display_set_text_sync((const char *[]){first_line, "", second_line, ""}, GUI_SCROLL_DELAY);
 
