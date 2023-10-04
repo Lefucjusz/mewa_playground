@@ -71,7 +71,7 @@ static uint32_t get_elapsed_time(void)
 
 static int32_t get_total_time(size_t file_size)
 {
-	const uint32_t current_bitrate = player_get_mp3_frame_bitrate();
+	const uint32_t current_bitrate = player_get_current_bitrate();
 
 	if (ctx.last_bitrate != current_bitrate) {
 		ctx.last_bitrate = GUI_BITRATE_VBR;
@@ -111,10 +111,10 @@ void start_playback(const char *filename)
 	}
 	snprintf(path, path_length, "%s/%s", fs_path, filename);
 
-	player_start(path);
+	player_start(path); // TODO check return code
 	player_set_volume(ctx.volume);
 	ctx.frames_analyzed = 0;
-	ctx.last_bitrate = player_get_mp3_frame_bitrate();
+	ctx.last_bitrate = player_get_current_bitrate();
 
 	free(path);
 }

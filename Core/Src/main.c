@@ -138,7 +138,7 @@ int main(void)
   dir_init(mount_point);
   keyboard_init();
   display_init();
-  player_init(&hi2s1, &hi2c1, NULL);
+  player_init(&hi2s1, &hi2c1);
   gui_init();
 
   while (1) {
