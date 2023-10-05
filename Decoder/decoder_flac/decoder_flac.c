@@ -9,6 +9,7 @@
 #define DR_FLAC_NO_OGG
 #define DR_FLAC_NO_CRC
 #define DR_FLAC_NO_SIMD
+#define DR_FLAC_NO_WCHAR
 
 #include "dr_flac.h"
 #include "decoder_flac.h"
@@ -52,7 +53,7 @@ static uint32_t decoder_get_sample_rate(void)
 
 static uint32_t decoder_get_current_bitrate(void)
 {
-	return 666; // TODO add code to obtain this value
+	return 6665; // TODO add code to obtain this value
 }
 
 /* API */

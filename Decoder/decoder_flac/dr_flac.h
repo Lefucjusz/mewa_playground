@@ -8732,7 +8732,6 @@ static drflac_bool32 drflac__on_seek_stdio(void* pUserData, int offset, drflac_s
     return fseek((FILE*)pUserData, offset, (origin == drflac_seek_origin_current) ? SEEK_CUR : SEEK_SET) == 0;
 }
 
-
 DRFLAC_API drflac* drflac_open_file(const char* pFileName, const drflac_allocation_callbacks* pAllocationCallbacks)
 {
     drflac* pFlac;

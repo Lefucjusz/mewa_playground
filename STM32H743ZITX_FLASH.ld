@@ -50,7 +50,7 @@ MEMORY
   RAM_D3 (rwx)   : ORIGIN = 0x38000000, LENGTH = 64K
   ITCMRAM (rwx)  : ORIGIN = 0x00000000, LENGTH = 64K
   
-  SDRAM (rwx)    : ORIGIN = 0x60000000, LENGTH = 32M
+  SDRAM (rwx)    : ORIGIN = 0xC0000000, LENGTH = 32M
 }
 
 /* Define output sections */

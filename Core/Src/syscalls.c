@@ -194,7 +194,7 @@ int _lseek(int file, int ptr, int dir)
   		  break;
   	  case SEEK_CUR:
 		  pos = f_tell(handle);
-		  ret = f_lseek(handle, ptr + pos);
+		  ret = f_lseek(handle, pos + ptr);
 		  break;
   	  case SEEK_END:
   		  size = f_size(handle);
