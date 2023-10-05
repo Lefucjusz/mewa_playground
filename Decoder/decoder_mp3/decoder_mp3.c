@@ -43,6 +43,11 @@ static size_t decoder_get_pcm_frames_played(void)
 	return ctx.mp3.currentPCMFrame;
 }
 
+static size_t decoder_get_pcm_frames_total(void)
+{
+	return 0; // The value is not available without decoding whole file
+}
+
 static uint32_t decoder_get_sample_rate(void)
 {
 	return ctx.mp3.sampleRate;
@@ -60,6 +65,7 @@ const struct decoder_interface_t *decoder_mp3_get_interface(void)
 	ctx.interface.deinit = decoder_deinit;
 	ctx.interface.read_pcm_frames = decoder_read_pcm_frames;
 	ctx.interface.get_pcm_frames_played = decoder_get_pcm_frames_played;
+	ctx.interface.get_pcm_frames_total = decoder_get_pcm_frames_total;
 	ctx.interface.get_sample_rate = decoder_get_sample_rate;
 	ctx.interface.get_current_bitrate = decoder_get_current_bitrate;
 

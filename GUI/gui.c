@@ -66,11 +66,17 @@ static bool is_directory(const FILINFO *fno)
 
 static uint32_t get_elapsed_time(void)
 {
-	return player_get_frames_played() / player_get_pcm_sample_rate();
+	return player_get_pcm_frames_played() / player_get_pcm_sample_rate();
 }
 
 static int32_t get_total_time(size_t file_size)
 {
+	const size_t frames_total = player_get_pcm_frames_total();
+	if (frames_total > 0) {
+		return frames_total / player_get_pcm_sample_rate();
+	}
+
+	/* If no total frames count info fallback to approximation algorithm */
 	const uint32_t current_bitrate = player_get_current_bitrate();
 
 	if (ctx.last_bitrate != current_bitrate) {

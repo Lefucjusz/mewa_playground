@@ -30,7 +30,8 @@ void player_stop(void);
 bool player_set_volume(int8_t volume);
 
 player_state_t player_get_state(void);
-size_t player_get_frames_played(void);
+size_t player_get_pcm_frames_played(void);
+size_t player_get_pcm_frames_total(void);
 uint32_t player_get_pcm_sample_rate(void);
 uint32_t player_get_current_bitrate(void);
 

@@ -30,11 +30,6 @@ typedef struct {
 static player_ctx_t __attribute__((section(".sdram"))) ctx;
 
 static bool configure_i2s(uint32_t sample_rate) {
-	/* Only 44k1 and 48k supported for now */
-	if ((sample_rate != I2S_AUDIOFREQ_44K) && (sample_rate != I2S_AUDIOFREQ_48K)) {
-		return false;
-	}
-
 	/* Deinit I2S module */
 	if (HAL_I2S_DeInit(ctx.i2s) != HAL_OK) {
 		return false;
@@ -160,9 +155,14 @@ player_state_t player_get_state(void)
 	return ctx.state;
 }
 
-size_t player_get_frames_played(void)
+size_t player_get_pcm_frames_played(void)
 {
 	return ctx.decoder->get_pcm_frames_played();
+}
+
+size_t player_get_pcm_frames_total(void)
+{
+	return ctx.decoder->get_pcm_frames_total();
 }
 
 uint32_t player_get_pcm_sample_rate(void)
