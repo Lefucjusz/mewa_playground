@@ -622,7 +622,7 @@ WORD ld_word (const BYTE* ptr)	/*	 Load a 2-byte little-endian word */
 static
 DWORD ld_dword (const BYTE* ptr)	/* Load a 4-byte little-endian word */
 {
-	volatile DWORD rv;
+	DWORD rv;
 
 	rv = ptr[3];
 	rv = rv << 8 | ptr[2];

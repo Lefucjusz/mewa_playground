@@ -66,7 +66,11 @@ static bool is_directory(const FILINFO *fno)
 
 static uint32_t get_elapsed_time(void)
 {
-	return player_get_pcm_frames_played() / player_get_pcm_sample_rate();
+	const uint32_t pcm_sample_rate = player_get_pcm_sample_rate();
+	if (pcm_sample_rate != 0) {
+		return player_get_pcm_frames_played() / pcm_sample_rate;
+	}
+	return 0;
 }
 
 static int32_t get_total_time(size_t file_size)
@@ -78,6 +82,9 @@ static int32_t get_total_time(size_t file_size)
 
 	/* If no total frames count info fallback to approximation algorithm */
 	const uint32_t current_bitrate = player_get_current_bitrate();
+	if (current_bitrate == 0) {
+		return 0;
+	}
 
 	if (ctx.last_bitrate != current_bitrate) {
 		ctx.last_bitrate = GUI_BITRATE_VBR;
@@ -117,7 +124,7 @@ void start_playback(const char *filename)
 	}
 	snprintf(path, path_length, "%s/%s", fs_path, filename);
 
-	player_start(path); // TODO check return code
+	player_start(path);
 	player_set_volume(ctx.volume);
 	ctx.frames_analyzed = 0;
 	ctx.last_bitrate = player_get_current_bitrate();

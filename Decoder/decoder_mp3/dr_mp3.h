@@ -2431,13 +2431,13 @@ DRMP3_API void drmp3dec_f32_to_s16(const float *in, drmp3_int16 *out, size_t num
 #define DRMP3_SEEK_LEADING_MP3_FRAMES   2
 #endif
 
-#define DRMP3_MIN_DATA_CHUNK_SIZE   16384*2
+#define DRMP3_MIN_DATA_CHUNK_SIZE   16384
 
 /* The size in bytes of each chunk of data to read from the MP3 stream. minimp3 recommends at least 16K, but in an attempt to reduce data movement I'm making this slightly larger. */
 /* Reducing it to 16K, bigger sizes resulted in long SD card read times and playback stuttering due to buffer underflow - Lefucjusz */
 
 #ifndef DRMP3_DATA_CHUNK_SIZE
-#define DRMP3_DATA_CHUNK_SIZE  DRMP3_MIN_DATA_CHUNK_SIZE
+#define DRMP3_DATA_CHUNK_SIZE  (DRMP3_MIN_DATA_CHUNK_SIZE*2)
 #endif
 
 

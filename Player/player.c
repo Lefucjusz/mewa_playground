@@ -157,22 +157,34 @@ player_state_t player_get_state(void)
 
 size_t player_get_pcm_frames_played(void)
 {
-	return ctx.decoder->get_pcm_frames_played();
+	if (ctx.decoder != NULL) {
+		return ctx.decoder->get_pcm_frames_played();
+	}
+	return 0;
 }
 
 size_t player_get_pcm_frames_total(void)
 {
-	return ctx.decoder->get_pcm_frames_total();
+	if (ctx.decoder != NULL) {
+		return ctx.decoder->get_pcm_frames_total();
+	}
+	return 0;
 }
 
 uint32_t player_get_pcm_sample_rate(void)
 {
-	return ctx.decoder->get_sample_rate();
+	if (ctx.decoder != NULL) {
+		return ctx.decoder->get_sample_rate();
+	}
+	return 0;
 }
 
 uint32_t player_get_current_bitrate(void)
 {
-	return ctx.decoder->get_current_bitrate();
+	if (ctx.decoder != NULL) {
+		return ctx.decoder->get_current_bitrate();
+	}
+	return 0;
 }
 
 void player_task(void)
