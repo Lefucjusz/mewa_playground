@@ -59,7 +59,7 @@
  * Notice: This is applicable only for cortex M7 based platform.
  */
 /* USER CODE BEGIN enableSDDmaCacheMaintenance */
-/* #define ENABLE_SD_DMA_CACHE_MAINTENANCE  1 */
+#define ENABLE_SD_DMA_CACHE_MAINTENANCE  1
 /* USER CODE END enableSDDmaCacheMaintenance */
 
 /*
@@ -74,13 +74,9 @@
 /* Private variables ---------------------------------------------------------*/
 #if defined(ENABLE_SCRATCH_BUFFER)
 #if defined (ENABLE_SD_DMA_CACHE_MAINTENANCE)
-ALIGN_32BYTES(static uint8_t scratch[BLOCKSIZE]); // 32-Byte aligned for cache maintenance
+static uint8_t __attribute__((section(".sdram"), aligned(32))) scratch[BLOCKSIZE]; // 32-Byte aligned for cache maintenance
 #else
-//__ALIGN_BEGIN static uint8_t scratch[BLOCKSIZE] __ALIGN_END;
-
-/* SDRAM is configured as non-cacheable, so no cache maintenance required, but 4-byte
- * alignment is necessary for MDMA to work properly */
-static uint8_t __attribute__((section(".sdram"), aligned(4))) scratch[BLOCKSIZE];
+__ALIGN_BEGIN static uint8_t scratch[BLOCKSIZE] __ALIGN_END;
 #endif
 #endif
 /* Disk status */

@@ -107,7 +107,7 @@ int player_start(const char *path)
 	return 0;
 }
 
-void player_pause(void) // TODO error handling
+void player_pause(void)
 {
 	if (ctx.state != PLAYER_PLAYING) {
 		return;
