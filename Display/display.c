@@ -6,6 +6,7 @@
  */
 
 #include "display.h"
+#include "i2cmux.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -60,6 +61,7 @@ static void display_gotoxy(size_t x, size_t y)
 void display_init(void)
 {
 	memset(&ctx, 0, sizeof(display_ctx_t));
+	i2cmux_select_channel(I2CMUX_CHANNEL_DISPLAY);
 	ssd1306_Fill(Black);
 }
 
@@ -178,6 +180,7 @@ void display_task(void)
 					continue;
 				}
 
+				i2cmux_select_channel(I2CMUX_CHANNEL_DISPLAY);
 				display_gotoxy(line, 0);
 				ssd1306_WriteString(ctx.line_buffer[line], Font_6x8, White);
 				ssd1306_UpdateScreen();
@@ -192,6 +195,7 @@ void display_task(void)
 					line_buffer[column] = ctx.line_buffer[line][src_column];
 				}
 
+				i2cmux_select_channel(I2CMUX_CHANNEL_DISPLAY);
 				display_gotoxy(line, 0);
 				ssd1306_WriteString(line_buffer, Font_6x8, White);
 				ssd1306_UpdateScreen();

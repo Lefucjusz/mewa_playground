@@ -24,12 +24,13 @@
 /* USER CODE BEGIN Includes */
 #include <stdbool.h>
 #include "sdram.h"
-#include "tca9548a.h"
 #include "dir.h"
 #include "keyboard.h"
 #include "display.h"
 #include "player.h"
 #include "gui.h"
+#include "eeprom.h"
+#include "i2cmux.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -128,8 +129,8 @@ int main(void)
   MX_I2C1_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
-  tca9548a_init();
-  tca9548a_switch_channel(1);
+  i2cmux_init();
+  i2cmux_select_channel(I2CMUX_CHANNEL_DISPLAY);
   ssd1306_Init();
 
   cs4270_init();

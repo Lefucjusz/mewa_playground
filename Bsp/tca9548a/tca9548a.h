@@ -12,6 +12,7 @@
 
 /* Constants */
 #define TCA9548A_FIXED_ADDRESS 0b01110000
+#define TCA9548A_CHANNELS_NUM 8
 
 /* Config */
 #define TCA9548A_NRESET_GPIO GPIOB

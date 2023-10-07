@@ -55,7 +55,7 @@ enum i2s_audio_freq_t
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-static struct pll_config_t pll_configs[FREQS_NUM] = {
+static const struct pll_config_t pll_configs[FREQS_NUM] = {
 		{.divn = 36, .divp = 5, .fracn = 6144}, // 44k1-based
 		{.divn = 16, .divp = 2, .fracn = 0} // 48k-based
 };
@@ -63,7 +63,7 @@ static struct pll_config_t pll_configs[FREQS_NUM] = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-static struct pll_config_t *HAL_I2S_GetPllConfig(uint32_t AudioFreq);
+static const struct pll_config_t *HAL_I2S_GetPllConfig(uint32_t AudioFreq);
 /* USER CODE END PFP */
 
 /* External functions --------------------------------------------------------*/
@@ -622,7 +622,7 @@ void HAL_SDRAM_MspDeInit(SDRAM_HandleTypeDef* hsdram){
 }
 
 /* USER CODE BEGIN 1 */
-static struct pll_config_t *HAL_I2S_GetPllConfig(uint32_t AudioFreq)
+static const struct pll_config_t *HAL_I2S_GetPllConfig(uint32_t AudioFreq)
 {
 	if ((AudioFreq % I2S_AUDIOFREQ_44K) == 0) {
 		return &pll_configs[FREQ_44K1_BASED];

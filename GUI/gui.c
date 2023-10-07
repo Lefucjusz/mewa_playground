@@ -10,6 +10,7 @@
 #include "display.h"
 #include "dir.h"
 #include "player.h"
+#include "database.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -400,6 +401,7 @@ static void refresh_task(void)
 
 		case GUI_VIEW_VOLUME:
 			if ((current_tick - ctx.last_volume_tick) > GUI_VOLUME_VIEW_DISPLAY_TIME) {
+				database_set_record(&ctx.volume, ITEM_VOLUME);
 				render_view_playback(GUI_REFRESH_ALL);
 				ctx.view = GUI_VIEW_PLAYBACK;
 			}
@@ -410,7 +412,7 @@ static void refresh_task(void)
 	}
 }
 
-void gui_init(void)
+bool gui_init(void)
 {
 	/* Clear context */
 	memset(&ctx, 0, sizeof(gui_ctx_t));
@@ -426,11 +428,16 @@ void gui_init(void)
 	refresh_list();
 
 	/* Set initial volume */
-	ctx.volume = GUI_DEFAULT_VOLUME;
+	const bool status = database_get_record(&ctx.volume, ITEM_VOLUME);
+	if (!status) {
+		return false;
+	}
 
 	/* Set default view and render it */
 	ctx.view = GUI_VIEW_EXPLORER;
 	render_view_explorer();
+
+	return true;
 }
 
 void gui_task(void)
