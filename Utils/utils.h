@@ -35,3 +35,13 @@ inline static bool is_extension(const char *filename, const char *ext)
     const char *dot_ptr = strrchr(filename, '.');
     return ((dot_ptr != NULL) && (strcasecmp(dot_ptr, ext) == 0));
 }
+
+inline static int32_t min(int32_t x, int32_t y)
+{
+	return (x < y) ? x : y;
+}
+
+inline static int32_t max(int32_t x, int32_t y)
+{
+	return (x > y) ? x : y;
+}

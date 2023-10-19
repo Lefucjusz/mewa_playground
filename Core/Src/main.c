@@ -27,13 +27,8 @@
 #include "lvgl_init.h"
 #include "lvgl.h"
 #include "gui.h"
-#include "dir.h"
-//#include "keyboard.h"
-//#include "display.h"
-//#include "player.h"
-//#include "gui.h"
-//#include "eeprom.h"
-//#include "i2cmux.h"
+#include "player.h"
+#include "cs4270.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -145,23 +140,16 @@ int main(void)
 //  i2cmux_select_channel(I2CMUX_CHANNEL_DISPLAY);
 //  ssd1306_Init();
 
-//  cs4270_init();
-//
+  cs4270_init();
+  cs4270_set_volume(30);
+
   FRESULT ret = f_mount(&fatfs, mount_point, 1);
   if (ret) {
 	  while (1);
   }
 
+  player_init(&hi2s1, &hi2c1);
   gui_init();
-//  keyboard_init();
-//  display_init();
-//  player_init(&hi2s1, &hi2c1);
-//  gui_init();
-//
-//  while (1) {
-//	  gui_task();
-//	  player_task();
-//  }
 
   /* USER CODE END 2 */
 
@@ -170,6 +158,7 @@ int main(void)
   while (1)
   {
 	  gui_task();
+	  player_task();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

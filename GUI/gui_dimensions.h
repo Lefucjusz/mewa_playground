@@ -9,8 +9,11 @@
 
 #include "ili9341.h"
 
-// TODO cleanup this
+#define GUI_SCREEN_WIDTH ILI9341_WIDTH
+#define GUI_SCREEN_HEIGHT ILI9341_HEIGHT
 
-static const lv_coord_t corner_radius = 0; // LVGL seems to not support adding radius only to selected corners so for now just disable it completely
-static const lv_coord_t sidebar_width = 50;
-static const lv_coord_t tab_width = ILI9341_WIDTH - sidebar_width;
+#define GUI_BASE_CORNER_RADIUS 0 // LVGL seems to not support adding radius only to selected corners
+#define GUI_WINDOW_CORNER_RADIUS 10
+
+#define GUI_SIDEBAR_WIDTH 50
+#define GUI_TAB_WIDTH (GUI_SCREEN_WIDTH - GUI_SIDEBAR_WIDTH)

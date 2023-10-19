@@ -13,34 +13,34 @@
 #include "decoder_interface.h"
 
 /* Internal context */
-struct decoder_ctx_t
+struct decoder_mp3_ctx_t
 {
 	drmp3 mp3;
 	struct decoder_interface_t interface;
 };
 
-static struct decoder_ctx_t __attribute__((section(".sdram"))) ctx;
+static struct decoder_mp3_ctx_t __attribute__((section(".sdram"))) mp3_ctx;
 
 /* Internal functions */
 static bool decoder_init(const char *path)
 {
-	const drmp3_bool32 status = drmp3_init_file(&ctx.mp3, path, NULL);
+	const drmp3_bool32 status = drmp3_init_file(&mp3_ctx.mp3, path, NULL);
 	return (status == DRMP3_TRUE);
 }
 
 static void decoder_deinit(void)
 {
-	drmp3_uninit(&ctx.mp3);
+	drmp3_uninit(&mp3_ctx.mp3);
 }
 
 static size_t decoder_read_pcm_frames(int16_t *buffer, size_t frames_to_read)
 {
-	return drmp3_read_pcm_frames_s16(&ctx.mp3, frames_to_read, buffer);
+	return drmp3_read_pcm_frames_s16(&mp3_ctx.mp3, frames_to_read, buffer);
 }
 
 static size_t decoder_get_pcm_frames_played(void)
 {
-	return ctx.mp3.currentPCMFrame;
+	return mp3_ctx.mp3.currentPCMFrame;
 }
 
 static size_t decoder_get_pcm_frames_total(void)
@@ -50,24 +50,24 @@ static size_t decoder_get_pcm_frames_total(void)
 
 static uint32_t decoder_get_sample_rate(void)
 {
-	return ctx.mp3.sampleRate;
+	return mp3_ctx.mp3.sampleRate;
 }
 
 static uint32_t decoder_get_current_bitrate(void)
 {
-	return ctx.mp3.mp3FrameBitrate;
+	return mp3_ctx.mp3.mp3FrameBitrate;
 }
 
 /* API */
 const struct decoder_interface_t *decoder_mp3_get_interface(void)
 {
-	ctx.interface.init = decoder_init;
-	ctx.interface.deinit = decoder_deinit;
-	ctx.interface.read_pcm_frames = decoder_read_pcm_frames;
-	ctx.interface.get_pcm_frames_played = decoder_get_pcm_frames_played;
-	ctx.interface.get_pcm_frames_total = decoder_get_pcm_frames_total;
-	ctx.interface.get_sample_rate = decoder_get_sample_rate;
-	ctx.interface.get_current_bitrate = decoder_get_current_bitrate;
+	mp3_ctx.interface.init = decoder_init;
+	mp3_ctx.interface.deinit = decoder_deinit;
+	mp3_ctx.interface.read_pcm_frames = decoder_read_pcm_frames;
+	mp3_ctx.interface.get_pcm_frames_played = decoder_get_pcm_frames_played;
+	mp3_ctx.interface.get_pcm_frames_total = decoder_get_pcm_frames_total;
+	mp3_ctx.interface.get_sample_rate = decoder_get_sample_rate;
+	mp3_ctx.interface.get_current_bitrate = decoder_get_current_bitrate;
 
-	return &ctx.interface;
+	return &mp3_ctx.interface;
 }

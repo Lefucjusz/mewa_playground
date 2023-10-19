@@ -13,4 +13,4 @@
 #define GUI_VIEW_FILES_INITIAL_PATH "/"
 
 void gui_view_files_create(lv_obj_t *sidebar);
-void gui_view_files_set_on_click_callback(void (*on_click)(const dir_entry_t *entry, const dir_list_t *dir_list));
+void gui_view_files_set_on_click_callback(void (*on_click)(const char *fs_path, dir_entry_t *entry, dir_list_t *dir_list));

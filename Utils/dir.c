@@ -167,6 +167,25 @@ dir_entry_t *dir_get_next(dir_list_t *list, dir_entry_t *current)
 	return entry->next;
 }
 
+dir_entry_t *dir_find_entry(dir_list_t *list, const char *name)
+{
+	if ((list == NULL) || (name == NULL)) {
+		return NULL;
+	}
+
+	dir_entry_t *entry = list->head;
+	do
+	{
+		const FILINFO *fno = (FILINFO *)entry->data;
+		if (strcmp(fno->fname, name) == 0) {
+			return entry;
+		}
+		entry = entry->next;
+	} while (entry != NULL);
+
+	return NULL;
+}
+
 void dir_list_free(dir_list_t *list)
 {
 	list_destroy(list);
