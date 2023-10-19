@@ -286,7 +286,7 @@
 
 /*1: Show the used memory and the memory fragmentation
  * Requires LV_MEM_CUSTOM = 0*/
-#define LV_USE_MEM_MONITOR 0
+#define LV_USE_MEM_MONITOR 1
 #if LV_USE_MEM_MONITOR
     #define LV_USE_MEM_MONITOR_POS LV_ALIGN_BOTTOM_LEFT
 #endif
@@ -550,7 +550,7 @@
 
 #define LV_USE_METER      0
 
-#define LV_USE_MSGBOX     0
+#define LV_USE_MSGBOX     1
 
 #define LV_USE_SPAN       0
 #if LV_USE_SPAN
@@ -577,7 +577,7 @@
 #if LV_USE_THEME_DEFAULT
 
     /*0: Light mode; 1: Dark mode*/
-    #define LV_THEME_DEFAULT_DARK 1
+    #define LV_THEME_DEFAULT_DARK 0
 
     /*1: Enable grow on press*/
     #define LV_THEME_DEFAULT_GROW 1

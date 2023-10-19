@@ -11,29 +11,39 @@
 #include <stdio.h>
 #include <errno.h>
 
-static char __attribute__((section(".sdram"))) path[PATH_MAX];
-static size_t depth;
-
-static int path_append(const char *name)
+struct dir_ctx_t
 {
-	const size_t cur_path_len = strlen(path);
-	const size_t space_left = sizeof(path) - cur_path_len;
+	char path[PATH_MAX];
+	size_t depth;
+};
+
+static struct dir_ctx_t __attribute__((section(".sdram"))) dir_ctx;
+
+inline static bool is_hidden(const FILINFO *fno)
+{
+	return (fno->fattrib & AM_HID);
+}
+
+inline static int path_append(const char *name)
+{
+	const size_t cur_path_len = strlen(dir_ctx.path);
+	const size_t space_left = sizeof(dir_ctx.path) - cur_path_len;
 	if (strlen(name) >= space_left) {
 		return -ENAMETOOLONG;
 	}
 
-	snprintf(path + cur_path_len, space_left, "/%s", name);
+	snprintf(dir_ctx.path + cur_path_len, space_left, "/%s", name);
 
 	return 0;
 }
 
-static int path_remove(void)
+inline static int path_remove(void)
 {
-	if (depth == 0) {
+	if (dir_ctx.depth == 0) {
 		return -ENOENT;
 	}
 
-	char *last_slash = strrchr(path, '/');
+	char *last_slash = strrchr(dir_ctx.path, '/');
 	*last_slash = '\0';
 
 	return 0;
@@ -49,8 +59,13 @@ static bool compare_ascending(const void *val1, const void *val2)
 
 void dir_init(const char *root_path)
 {
-	strncpy(path, root_path, sizeof(path));
-	depth = 0;
+	strncpy(dir_ctx.path, root_path, sizeof(dir_ctx.path));
+	dir_ctx.depth = 0;
+}
+
+bool dir_is_top(void)
+{
+	return (dir_ctx.depth == 0);
 }
 
 int dir_enter(const char *name)
@@ -59,7 +74,7 @@ int dir_enter(const char *name)
 	if (ret) {
 		return ret;
 	}
-	depth++;
+	dir_ctx.depth++;
 
 	return 0;
 }
@@ -70,14 +85,14 @@ int dir_return(void)
 	if (ret) {
 		return ret;
 	}
-	depth--;
+	dir_ctx.depth--;
 
 	return 0;
 }
 
 const char *dir_get_fs_path(void)
 {
-	return path;
+	return dir_ctx.path;
 }
 
 dir_list_t *dir_list(void)
@@ -87,7 +102,7 @@ dir_list_t *dir_list(void)
 	FRESULT ret;
 	dir_list_t *list = list_create();
 
-	ret = f_opendir(&dir, path);
+	ret = f_opendir(&dir, dir_ctx.path);
 	if (ret != FR_OK) {
 		return NULL;
 	}
@@ -97,7 +112,9 @@ dir_list_t *dir_list(void)
 		if ((ret != FR_OK) || (fno.fname[0] == '\0')) {
 			break;
 		}
-
+		if (is_hidden(&fno)) {
+			continue;
+		}
 		list_add(list, &fno, sizeof(FILINFO), LIST_PREPEND);
 	}
 

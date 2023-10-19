@@ -7,6 +7,10 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+
 inline static int32_t clamp(int32_t x, int32_t min, int32_t max)
 {
 	return (x < min) ? min : (x > max) ? max : x;
@@ -24,4 +28,10 @@ inline static uint16_t bswap16(uint16_t x)
 #else
 	return ((x << 8) | (x >> 8));
 #endif
+}
+
+inline static bool is_extension(const char *filename, const char *ext)
+{
+    const char *dot_ptr = strrchr(filename, '.');
+    return ((dot_ptr != NULL) && (strcasecmp(dot_ptr, ext) == 0));
 }

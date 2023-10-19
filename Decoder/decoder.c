@@ -9,13 +9,7 @@
 #include "decoder_mp3.h"
 #include "decoder_flac.h"
 #include "decoder_wav.h"
-#include <string.h>
-
-static bool is_extension(const char *filename, const char *ext)
-{
-    const char *dot_ptr = strrchr(filename, '.');
-    return ((dot_ptr != NULL) && (strcasecmp(dot_ptr, ext) == 0));
-}
+#include "utils.h"
 
 const struct decoder_interface_t *decoder_get_interface(const char *filename)
 {

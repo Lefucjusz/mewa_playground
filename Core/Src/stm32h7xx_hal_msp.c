@@ -449,10 +449,10 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     PF7     ------> SPI5_SCK
     PF9     ------> SPI5_MOSI
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_9;
+    GPIO_InitStruct.Pin = LCD_SCK_Pin|LCD_MOSI_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI5;
     HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
@@ -507,24 +507,17 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
     PG14     ------> SPI6_MOSI
     PB4 (NJTRST)     ------> SPI6_MISO
     */
-    GPIO_InitStruct.Pin = TOUCH_SCK_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF5_SPI6;
-    HAL_GPIO_Init(TOUCH_SCK_GPIO_Port, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = TOUCH_MOSI_Pin;
+    GPIO_InitStruct.Pin = TOUCH_SCK_Pin|TOUCH_MOSI_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
     GPIO_InitStruct.Alternate = GPIO_AF5_SPI6;
-    HAL_GPIO_Init(TOUCH_MOSI_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
     GPIO_InitStruct.Pin = TOUCH_MISO_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
     GPIO_InitStruct.Alternate = GPIO_AF8_SPI6;
     HAL_GPIO_Init(TOUCH_MISO_GPIO_Port, &GPIO_InitStruct);
 
@@ -555,7 +548,7 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
     PF7     ------> SPI5_SCK
     PF9     ------> SPI5_MOSI
     */
-    HAL_GPIO_DeInit(GPIOF, GPIO_PIN_7|GPIO_PIN_9);
+    HAL_GPIO_DeInit(GPIOF, LCD_SCK_Pin|LCD_MOSI_Pin);
 
     /* SPI5 DMA DeInit */
     HAL_DMA_DeInit(hspi->hdmatx);
