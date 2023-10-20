@@ -18,7 +18,8 @@ struct gui_files_ctx_t
 	lv_obj_t *tab_files;
 	lv_obj_t *list_files;
 	void (*on_click)(const char *fs_path, dir_entry_t *entry, dir_list_t *dir_list);
-	dir_list_t *dirs;
+	dir_list_t *dirs_shown;
+	dir_list_t *dirs_played;
 };
 
 static struct gui_files_ctx_t gui_files_ctx;
@@ -40,7 +41,6 @@ void gui_view_files_create(lv_obj_t *sidebar)
 
 	/* Set initial directory */
 	dir_init(GUI_VIEW_FILES_INITIAL_PATH);
-	gui_files_ctx.dirs = dir_list();
 
 	/* Create files tab */
 	gui_files_ctx.tab_files = lv_tabview_add_tab(sidebar, LV_SYMBOL_FILE);
@@ -99,10 +99,16 @@ static void on_directory_click(lv_event_t *event)
 
 static void on_supported_file_click(lv_event_t *event)
 {
+	/* If currently played directory is different than currently shown, destroy played dir list and update it */
+	if (gui_files_ctx.dirs_played != gui_files_ctx.dirs_shown) {
+		dir_list_free(gui_files_ctx.dirs_played);
+		gui_files_ctx.dirs_played = gui_files_ctx.dirs_shown;
+	}
+
 	const char *filename = (const char *)lv_event_get_user_data(event);
-	dir_entry_t *current_entry = dir_find_entry(gui_files_ctx.dirs, filename);
+	dir_entry_t *current_entry = dir_find_entry(gui_files_ctx.dirs_played, filename);
 	if (gui_files_ctx.on_click != NULL) {
-		gui_files_ctx.on_click(dir_get_fs_path(), current_entry, gui_files_ctx.dirs);
+		gui_files_ctx.on_click(dir_get_fs_path(), current_entry, gui_files_ctx.dirs_played);
 	}
 }
 
@@ -114,12 +120,16 @@ static void on_unsupported_file_click(lv_event_t *event)
 
 static void reload_list()
 {
+	/* Delete list if not used in playback */
+	if (gui_files_ctx.dirs_played != gui_files_ctx.dirs_shown) {
+		dir_list_free(gui_files_ctx.dirs_shown);
+	}
+
 	/* Delete current list contents */
-	dir_list_free(gui_files_ctx.dirs);
 	lv_obj_clean(gui_files_ctx.list_files);
 
 	/* Create new files list */
-	gui_files_ctx.dirs = dir_list();
+	gui_files_ctx.dirs_shown = dir_list();
 
 	/* Create directory path label */
 	lv_list_add_text(gui_files_ctx.list_files, dir_get_fs_path()); // TODO this should not move
@@ -131,7 +141,7 @@ static void reload_list()
 		lv_obj_add_event_cb(button, on_directory_up_click, LV_EVENT_CLICKED, NULL);
 	}
 
-	dir_entry_t *const first_dir = gui_files_ctx.dirs->head;
+	dir_entry_t *const first_dir = gui_files_ctx.dirs_shown->head;
 	if (first_dir == NULL) {
 		return;
 	}
@@ -153,6 +163,6 @@ static void reload_list()
 			lv_obj_add_event_cb(button, on_unsupported_file_click, LV_EVENT_CLICKED, (void *)fno->fname);
 		}
 
-		current_dir = dir_get_next(gui_files_ctx.dirs, current_dir);
+		current_dir = dir_get_next(gui_files_ctx.dirs_shown, current_dir);
 	} while (current_dir != first_dir);
 }

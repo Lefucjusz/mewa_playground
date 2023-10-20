@@ -74,8 +74,7 @@ static void on_file_clicked(const char *fs_path, dir_entry_t *entry, dir_list_t 
 	/* Store current directory list */
 	strncpy(gui_ctx.fs_path, fs_path, sizeof(gui_ctx.fs_path));
 	gui_ctx.current_dir = entry;
-	dir_list_free(gui_ctx.dirs); // TODO implement not freeing it on the other side!
-	gui_ctx.dirs = dir_list;
+	gui_ctx.dirs = dir_list; // Previous one is already freed by files view, just assign
 
 	/* Start playback */
 	const FILINFO *fno = (FILINFO *)entry->data;
