@@ -166,26 +166,17 @@ enum player_state_t player_get_state(void)
 
 uint32_t player_get_elapsed_time(void)
 {
-	//if (player_ctx.decoder != NULL) {
-		return player_ctx.decoder->get_elapsed_time();
-	//}
-	//return 0;
+	return player_ctx.decoder->get_elapsed_time();
 }
 
 uint32_t player_get_total_time(void)
 {
-	//if (player_ctx.decoder != NULL) {
-		return player_ctx.decoder->get_total_time();
-	//}
-	//return 0;
+	return player_ctx.decoder->get_total_time();
 }
 
 uint32_t player_get_pcm_sample_rate(void)
 {
-	//if (player_ctx.decoder != NULL) {
-		return player_ctx.decoder->get_sample_rate();
-	//}
-	//return 0;
+	return player_ctx.decoder->get_sample_rate();
 }
 
 const char *player_get_track_title(void)

@@ -30,8 +30,6 @@ static void lvgl_on_dma_tx_complete(void)
 
 static void lvgl_on_display_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *px_map)
 {
-	UNUSED(disp_drv);
-
 	const size_t dx = (area->x2 - area->x1) + 1;
 	const size_t dy = (area->y2 - area->y1) + 1;
 	const size_t data_size = dx * dy * sizeof(*px_map);

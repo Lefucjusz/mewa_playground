@@ -31,6 +31,9 @@ dir_entry_t *dir_get_prev(dir_list_t *list, dir_entry_t *current);
 /* Returns next element, if there's no such, returns first (looped list) */
 dir_entry_t *dir_get_next(dir_list_t *list, dir_entry_t *current);
 
+/* Returns file descriptor or NULL if entry invalid */
+FILINFO *dir_get_fd(dir_entry_t *entry);
+
 /* Returns element with given name or NULL if not found */
 dir_entry_t *dir_find_entry(dir_list_t *list, const char *name);
 

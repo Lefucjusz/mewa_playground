@@ -6,6 +6,7 @@
  */
 
 #include "gui_popup_unsupported.h"
+#include "gui_dimensions.h"
 #include "lvgl.h"
 #include <stdio.h>
 
@@ -19,6 +20,7 @@ void gui_popup_unsupported_create(const char *filename)
 	snprintf(msg_buffer, sizeof(msg_buffer), "File '%s' has unsupported format!", filename);
 
 	lv_obj_t *msgbox = lv_msgbox_create(NULL, title, msg_buffer, NULL, true);
+	lv_obj_set_style_radius(msgbox, GUI_WINDOW_CORNER_RADIUS, 0);
 	lv_obj_center(msgbox);
 	lv_obj_set_style_text_font(lv_msgbox_get_title(msgbox), &lv_font_montserrat_18, 0);
 }

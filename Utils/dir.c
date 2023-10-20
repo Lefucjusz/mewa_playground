@@ -167,6 +167,14 @@ dir_entry_t *dir_get_next(dir_list_t *list, dir_entry_t *current)
 	return entry->next;
 }
 
+FILINFO *dir_get_fd(dir_entry_t *entry)
+{
+	if (entry == NULL) {
+		return NULL;
+	}
+	return (FILINFO *)entry->data;
+}
+
 dir_entry_t *dir_find_entry(dir_list_t *list, const char *name)
 {
 	if ((list == NULL) || (name == NULL)) {
@@ -176,7 +184,7 @@ dir_entry_t *dir_find_entry(dir_list_t *list, const char *name)
 	dir_entry_t *entry = list->head;
 	do
 	{
-		const FILINFO *fno = (FILINFO *)entry->data;
+		const FILINFO *fno = dir_get_fd(entry);
 		if (strcmp(fno->fname, name) == 0) {
 			return entry;
 		}

@@ -17,9 +17,9 @@ struct gui_files_ctx_t
 {
 	lv_obj_t *tab_files;
 	lv_obj_t *list_files;
-	void (*on_click)(const char *fs_path, dir_entry_t *entry, dir_list_t *dir_list);
 	dir_list_t *dirs_shown;
 	dir_list_t *dirs_played;
+	void (*on_click)(const char *fs_path, dir_entry_t *entry, dir_list_t *dir_list);
 };
 
 static struct gui_files_ctx_t gui_files_ctx;
@@ -148,7 +148,7 @@ static void reload_list()
 
 	dir_entry_t *current_dir = first_dir;
 	do {
-		const FILINFO *fno = (FILINFO *)current_dir->data;
+		const FILINFO *fno = dir_get_fd(current_dir);
 
 		if (is_directory(fno)) {
 			button = lv_list_add_btn(gui_files_ctx.list_files, LV_SYMBOL_DIRECTORY, fno->fname);

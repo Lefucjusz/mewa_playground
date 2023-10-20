@@ -14,6 +14,12 @@
 #include <stdio.h>
 #include <limits.h>
 
+/* TODO:
+ * - skipping unsupported files when clicking prev/next
+ * - autostop after entire list played
+ * - handle error code from player_start and show error
+ */
+
 #define GUI_TAB_FILES_ID 0
 #define GUI_TAB_PLAYER_ID 1
 
@@ -48,8 +54,7 @@ static void update_metadata(void)
 {
 	const char *title = player_get_track_title();
 	if (title[0] == '\0') {
-		const FILINFO *fno = (FILINFO *)gui_ctx.current_dir->data;
-		title = fno->fname;
+		title = dir_get_fd(gui_ctx.current_dir)->fname;
 	}
 	gui_view_player_set_title(title);
 
@@ -77,8 +82,7 @@ static void on_file_clicked(const char *fs_path, dir_entry_t *entry, dir_list_t 
 	gui_ctx.dirs = dir_list; // Previous one is already freed by files view, just assign
 
 	/* Start playback */
-	const FILINFO *fno = (FILINFO *)entry->data;
-	start_playback(fno->fname);
+	start_playback(dir_get_fd(entry)->fname);
 
 	/* Update GUI */
 	update_metadata();
@@ -94,11 +98,25 @@ static void gui_refresh(void)
 	}
 }
 
+static void on_prev_clicked(void)
+{
+	gui_ctx.current_dir = dir_get_prev(gui_ctx.dirs, gui_ctx.current_dir);
+	start_playback(dir_get_fd(gui_ctx.current_dir)->fname);
+	update_metadata();
+}
+
+static void on_next_clicked(void)
+{
+	gui_ctx.current_dir = dir_get_next(gui_ctx.dirs, gui_ctx.current_dir);
+	start_playback(dir_get_fd(gui_ctx.current_dir)->fname);
+	update_metadata();
+}
+
 static void on_play_clicked(void)
 {
 	switch (player_get_state()) {
 		case PLAYER_STOPPED:
-			// TODO restart from the beginning
+			on_next_clicked();
 			break;
 
 		case PLAYER_PAUSED:
@@ -116,25 +134,13 @@ static void on_play_clicked(void)
 	gui_refresh();
 }
 
-static void on_prev_clicked(void)
-{
-	gui_ctx.current_dir = dir_get_prev(gui_ctx.dirs, gui_ctx.current_dir);
-	const FILINFO *fno = (FILINFO *)gui_ctx.current_dir->data;
-	start_playback(fno->fname);
-	update_metadata();
-}
-
-static void on_next_clicked(void)
-{
-	gui_ctx.current_dir = dir_get_next(gui_ctx.dirs, gui_ctx.current_dir);
-	const FILINFO *fno = (FILINFO *)gui_ctx.current_dir->data;
-	start_playback(fno->fname);
-	update_metadata();
-}
-
 static void on_player_stopped(void)
 {
-	on_next_clicked(); // TODO stop when finished
+	/* If not at the end of the list - proceed to next entry */
+	const dir_entry_t *const next_dir = gui_ctx.current_dir->next;
+	if (next_dir != NULL) {
+		on_next_clicked();
+	}
 }
 
 void gui_init(void)

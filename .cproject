@@ -53,17 +53,14 @@
 									<listOptionValue builtIn="false" value="../FATFS/App"/>
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/FatFs/src"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/cs4270}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/ssd1306}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/tca9548a}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/xpt2046}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/ili9341}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/sdram}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/eeprom}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Player}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Keyboard}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/GUI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Utils}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Display}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Decoder}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Decoder/decoder_flac}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Decoder/decoder_mp3}&quot;"/>
@@ -166,17 +163,14 @@
 									<listOptionValue builtIn="false" value="../FATFS/App"/>
 									<listOptionValue builtIn="false" value="../Middlewares/Third_Party/FatFs/src"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/cs4270}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/ssd1306}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/tca9548a}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/xpt2046}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/ili9341}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/sdram}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Bsp/eeprom}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Player}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Keyboard}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/GUI}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Utils}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Display}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Decoder}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Decoder/decoder_flac}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/mewa_playground/Decoder/decoder_mp3}&quot;"/>
