@@ -137,11 +137,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 //  i2cmux_init();
-//  i2cmux_select_channel(I2CMUX_CHANNEL_DISPLAY);
-//  ssd1306_Init();
-
   cs4270_init();
-  cs4270_set_volume(30);
 
   FRESULT ret = f_mount(&fatfs, mount_point, 1);
   if (ret) {

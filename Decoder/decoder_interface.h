@@ -30,6 +30,5 @@ struct decoder_interface_t
 	uint32_t (*get_elapsed_time)(void);
 	uint32_t (*get_total_time)(void);
 	uint32_t (*get_sample_rate)(void);
-
 	const struct decoder_track_metadata_t *(*get_track_metadata)(void);
 };

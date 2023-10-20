@@ -154,7 +154,7 @@ void player_stop(void)
 	player_ctx.state = PLAYER_STOPPED;
 }
 
-bool player_set_volume(int8_t volume)
+bool player_set_volume(uint8_t volume)
 {
 	return cs4270_set_volume(volume);
 }

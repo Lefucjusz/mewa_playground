@@ -10,6 +10,11 @@
 #include <stdint.h>
 #include <time.h>
 #include "lvgl.h"
+#include "cs4270.h"
+
+#define GUI_VIEW_PLAYER_MIN_VOLUME (CS4270_MIN_VOLUME_VALUE / 2) // Get only half of the codec scale, as lower values are almost inaudible
+#define GUI_VIEW_PLAYER_MAX_VOLUME CS4270_MAX_VOLUME_VALUE
+#define GUI_VIEW_PLAYER_INITIAL_VOLUME (CS4270_INITIAL_VOLUME_DB * CS4270_VOLUME_STEPS_PER_DB)
 
 enum gui_view_player_state_t
 {
@@ -33,7 +38,6 @@ void gui_view_player_set_on_play_callback(void (*on_play)(void));
 void gui_view_player_set_on_prev_callback(void (*on_prev)(void));
 void gui_view_player_set_on_next_callback(void (*on_next)(void));
 void gui_view_player_set_on_volume_callback(void (*on_volume)(uint8_t volume));
-void gui_view_player_set_on_progress_callback(void (*on_progress)(uint8_t progress));
 
 void gui_view_player_set_title(const char *title);
 void gui_view_player_set_album(const char *album);

@@ -15,8 +15,6 @@
 #include <limits.h>
 
 /* TODO:
- * - skipping unsupported files when clicking prev/next
- * - autostop after entire list played
  * - handle error code from player_start and show error
  */
 
@@ -36,18 +34,21 @@ struct gui_ctx_t
 
 static struct gui_ctx_t __attribute__((section(".sdram"))) gui_ctx;
 
-static void start_playback(const char *filename)
+static bool start_playback(const char *filename)
 {
 	/* Prepare path */
 	const size_t path_length = strlen(gui_ctx.fs_path) + strlen(filename) + 2; // Additional '/' and null-teminator
 
 	char *path = calloc(1, path_length);
 	if (path == NULL) {
-		return; // TODO show some error
+		return false;
 	}
 	snprintf(path, path_length, "%s/%s", gui_ctx.fs_path, filename);
-	player_start(path); // Start playback
+
+	const int status = player_start(path);
 	free(path);
+
+	return (status == 0);
 }
 
 static void update_metadata(void)
@@ -100,16 +101,32 @@ static void gui_refresh(void)
 
 static void on_prev_clicked(void)
 {
-	gui_ctx.current_dir = dir_get_prev(gui_ctx.dirs, gui_ctx.current_dir);
-	start_playback(dir_get_fd(gui_ctx.current_dir)->fname);
-	update_metadata();
+	bool success = false;
+
+	/* Try playing all the songs until first successful */
+	while (!success) {
+		gui_ctx.current_dir = dir_get_prev(gui_ctx.dirs, gui_ctx.current_dir);
+		success = start_playback(dir_get_fd(gui_ctx.current_dir)->fname);
+	}
+
+	if (success) {
+		update_metadata();
+	}
 }
 
 static void on_next_clicked(void)
 {
-	gui_ctx.current_dir = dir_get_next(gui_ctx.dirs, gui_ctx.current_dir);
-	start_playback(dir_get_fd(gui_ctx.current_dir)->fname);
-	update_metadata();
+	bool success = false;
+
+	/* Try playing all the songs until first successful */
+	while (!success) {
+		gui_ctx.current_dir = dir_get_next(gui_ctx.dirs, gui_ctx.current_dir);
+		success = start_playback(dir_get_fd(gui_ctx.current_dir)->fname);
+	}
+
+	if (success) {
+		update_metadata();
+	}
 }
 
 static void on_play_clicked(void)
@@ -134,12 +151,23 @@ static void on_play_clicked(void)
 	gui_refresh();
 }
 
+static void on_volume_changed(uint8_t volume)
+{
+	player_set_volume(volume);
+}
+
 static void on_player_stopped(void)
 {
-	/* If not at the end of the list - proceed to next entry */
-	const dir_entry_t *const next_dir = gui_ctx.current_dir->next;
-	if (next_dir != NULL) {
-		on_next_clicked();
+	bool success = false;
+
+	/* Try playing all the songs until first successful or end of the list */
+	while (!success && (gui_ctx.current_dir->next != NULL)) {
+		gui_ctx.current_dir = dir_get_next(gui_ctx.dirs, gui_ctx.current_dir);
+		success = start_playback(dir_get_fd(gui_ctx.current_dir)->fname);
+	}
+
+	if (success) {
+		update_metadata();
 	}
 }
 
@@ -166,6 +194,7 @@ void gui_init(void)
 	gui_view_player_set_on_play_callback(on_play_clicked);
 	gui_view_player_set_on_prev_callback(on_prev_clicked);
 	gui_view_player_set_on_next_callback(on_next_clicked);
+	gui_view_player_set_on_volume_callback(on_volume_changed);
 
 	/* Attach player callback */
 	player_set_on_stopped_callback(on_player_stopped);

@@ -7,28 +7,44 @@
 
 #include "gui_view_player.h"
 #include "gui_dimensions.h"
+#include "utils.h"
 #include <stdio.h>
 
 /* TODO:
- * - add volume
- * - add seeking
  * - add styles
  * - scrolling of too long names
  */
 
 #define PLAYER_TAB_MARGIN_X 20
+
+#define METADATA_LABELS_MARGIN_X 10
+#define METADATA_LABELS_WIDTH (GUI_TAB_WIDTH - 2 * METADATA_LABELS_MARGIN_X)
+#define METADATA_TITLE_HEIGHT 24
+#define METADATA_ALBUM_HEIGHT 21
+#define METADATA_ARTIST_HEIGHT 17
 #define METADATA_SPACING_Y 8
 
 #define PROGRESS_BAR_WIDTH (GUI_TAB_WIDTH - 2 * PLAYER_TAB_MARGIN_X)
 #define PROGRESS_BAR_HEIGHT 10
-#define PROGRESS_BAR_SPACING_Y 30
+#define PROGRESS_BAR_SPACING_Y 21
 
 #define TIME_LABELS_OFFSET_Y 10
 
-#define PLAY_BUTTON_DIAMETER 45
-#define NAV_BUTTON_DIAMETER 30
-#define NAV_BAR_SPACING_Y 30
+#define PLAY_BUTTON_DIAMETER 42
+#define NAV_BUTTON_DIAMETER 28
+
+#define NAV_BAR_SPACING_Y 26
 #define NAV_BUTTONS_SPACING_X 35
+
+#define VOLUME_SLIDER_OFFSET_Y 18
+#define VOLUME_SLIDER_TO_PROGRESS_BAR_WIDTH_DIFF 40
+#define VOLUME_SLIDER_WIDTH (PROGRESS_BAR_WIDTH - 2 * VOLUME_SLIDER_TO_PROGRESS_BAR_WIDTH_DIFF)
+#define VOLUME_SLIDER_HEIGHT 5
+#define VOLUME_SLIDER_MIN_VALUE 0
+#define VOLUME_SLIDER_MAX_VALUE 100
+
+#define SPEAKER_ICON_OFFSET_X 12
+#define SPEAKER_ICON_OFFSET_Y 1
 
 struct gui_player_ctx_t
 {
@@ -45,12 +61,13 @@ struct gui_player_ctx_t
 	lv_obj_t *prev_icon;
 	lv_obj_t *next_button;
 	lv_obj_t *next_icon;
+	lv_obj_t *volume_slider;
+	lv_obj_t *speaker_icon;
 
 	void (*on_play_clicked)(void);
 	void (*on_prev_clicked)(void);
 	void (*on_next_clicked)(void);
 	void (*on_volume_changed)(uint8_t volume);
-	void (*on_progress_changed)(uint8_t progress);
 
 	uint32_t elapsed_time_s;
 	uint32_t total_time_s;
@@ -106,24 +123,43 @@ static void on_next_clicked(lv_event_t *event)
 	}
 }
 
+static void on_volume_changed(lv_event_t *event)
+{
+	if (gui_player_ctx.on_volume_changed != NULL) {
+		lv_obj_t *slider = lv_event_get_target(event);
+		const uint8_t value_db = map(lv_slider_get_value(slider), VOLUME_SLIDER_MIN_VALUE, VOLUME_SLIDER_MAX_VALUE, GUI_VIEW_PLAYER_MIN_VOLUME, GUI_VIEW_PLAYER_MAX_VOLUME);
+		gui_player_ctx.on_volume_changed(value_db);
+	}
+}
+
 void gui_view_player_create(lv_obj_t *sidebar)
 {
 	memset(&gui_player_ctx, 0, sizeof(gui_player_ctx));
 
 	gui_player_ctx.tab_player = lv_tabview_add_tab(sidebar, LV_SYMBOL_AUDIO);
+	lv_obj_clear_flag(gui_player_ctx.tab_player, LV_OBJ_FLAG_SCROLLABLE);
 
 	gui_player_ctx.title_label = lv_label_create(gui_player_ctx.tab_player);
-	lv_label_set_text(gui_player_ctx.title_label, "Title");
-	lv_obj_set_style_text_font(gui_player_ctx.title_label, &lv_font_montserrat_22, 0);
+	lv_obj_set_size(gui_player_ctx.title_label, METADATA_LABELS_WIDTH, METADATA_TITLE_HEIGHT);
+	lv_label_set_text(gui_player_ctx.title_label, "");
+	lv_label_set_long_mode(gui_player_ctx.title_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+	lv_obj_set_style_text_font(gui_player_ctx.title_label, &lv_font_montserrat_22, LV_PART_MAIN);
+	lv_obj_set_style_text_align(gui_player_ctx.title_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
 	lv_obj_align(gui_player_ctx.title_label, LV_ALIGN_TOP_MID, 0, 0);
 
 	gui_player_ctx.album_label = lv_label_create(gui_player_ctx.tab_player);
-	lv_label_set_text(gui_player_ctx.album_label, "Album");
-	lv_obj_set_style_text_font(gui_player_ctx.album_label, &lv_font_montserrat_18, 0);
+	lv_obj_set_size(gui_player_ctx.album_label, METADATA_LABELS_WIDTH, METADATA_ALBUM_HEIGHT);
+	lv_label_set_text(gui_player_ctx.album_label, "No track selected");
+	lv_label_set_long_mode(gui_player_ctx.album_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+	lv_obj_set_style_text_font(gui_player_ctx.album_label, &lv_font_montserrat_18, LV_PART_MAIN);
+	lv_obj_set_style_text_align(gui_player_ctx.album_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
 	lv_obj_align_to(gui_player_ctx.album_label, gui_player_ctx.title_label, LV_ALIGN_OUT_BOTTOM_MID, 0, METADATA_SPACING_Y);
 
 	gui_player_ctx.artist_label = lv_label_create(gui_player_ctx.tab_player);
-	lv_label_set_text(gui_player_ctx.artist_label, "Artist");
+	lv_obj_set_size(gui_player_ctx.artist_label, METADATA_LABELS_WIDTH, METADATA_ARTIST_HEIGHT);
+	lv_label_set_text(gui_player_ctx.artist_label, "");
+	lv_label_set_long_mode(gui_player_ctx.artist_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+	lv_obj_set_style_text_align(gui_player_ctx.artist_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
 	lv_obj_align_to(gui_player_ctx.artist_label, gui_player_ctx.album_label, LV_ALIGN_OUT_BOTTOM_MID, 0, METADATA_SPACING_Y);
 
 	gui_player_ctx.progress_bar = lv_bar_create(gui_player_ctx.tab_player);
@@ -131,16 +167,16 @@ void gui_view_player_create(lv_obj_t *sidebar)
 	lv_obj_align_to(gui_player_ctx.progress_bar, gui_player_ctx.artist_label, LV_ALIGN_OUT_BOTTOM_MID, 0, PROGRESS_BAR_SPACING_Y);
 
 	gui_player_ctx.elapsed_time = lv_label_create(gui_player_ctx.tab_player);
-	lv_label_set_text(gui_player_ctx.elapsed_time, timestamp_to_time_string(0));
+	lv_label_set_text(gui_player_ctx.elapsed_time, "--:--");
 	lv_obj_align_to(gui_player_ctx.elapsed_time, gui_player_ctx.progress_bar, LV_ALIGN_OUT_BOTTOM_LEFT, 0, TIME_LABELS_OFFSET_Y);
 
 	gui_player_ctx.total_time = lv_label_create(gui_player_ctx.tab_player);
-	lv_label_set_text(gui_player_ctx.elapsed_time, timestamp_to_time_string(0));
+	lv_label_set_text(gui_player_ctx.total_time, "--:--");
 	lv_obj_align_to(gui_player_ctx.total_time, gui_player_ctx.progress_bar, LV_ALIGN_OUT_BOTTOM_RIGHT, 0, TIME_LABELS_OFFSET_Y);
 
 	gui_player_ctx.play_button = lv_btn_create(gui_player_ctx.tab_player);
 	lv_obj_set_size(gui_player_ctx.play_button, PLAY_BUTTON_DIAMETER, PLAY_BUTTON_DIAMETER);
-	lv_obj_set_style_radius(gui_player_ctx.play_button, LV_RADIUS_CIRCLE, 0);
+	lv_obj_set_style_radius(gui_player_ctx.play_button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
 	lv_obj_add_event_cb(gui_player_ctx.play_button, on_play_clicked, LV_EVENT_CLICKED, NULL);
 	lv_obj_align_to(gui_player_ctx.play_button, gui_player_ctx.progress_bar, LV_ALIGN_OUT_BOTTOM_MID, 0, NAV_BAR_SPACING_Y);
 
@@ -150,7 +186,7 @@ void gui_view_player_create(lv_obj_t *sidebar)
 
 	gui_player_ctx.prev_button = lv_btn_create(gui_player_ctx.tab_player);
 	lv_obj_set_size(gui_player_ctx.prev_button, NAV_BUTTON_DIAMETER, NAV_BUTTON_DIAMETER);
-	lv_obj_set_style_radius(gui_player_ctx.prev_button, LV_RADIUS_CIRCLE, 0);
+	lv_obj_set_style_radius(gui_player_ctx.prev_button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
 	lv_obj_add_event_cb(gui_player_ctx.prev_button, on_prev_clicked, LV_EVENT_CLICKED, NULL);
 	lv_obj_align_to(gui_player_ctx.prev_button, gui_player_ctx.play_button, LV_ALIGN_OUT_LEFT_MID, -NAV_BUTTONS_SPACING_X, 0);
 
@@ -160,13 +196,25 @@ void gui_view_player_create(lv_obj_t *sidebar)
 
 	gui_player_ctx.next_button = lv_btn_create(gui_player_ctx.tab_player);
 	lv_obj_set_size(gui_player_ctx.next_button, NAV_BUTTON_DIAMETER, NAV_BUTTON_DIAMETER);
-	lv_obj_set_style_radius(gui_player_ctx.next_button, LV_RADIUS_CIRCLE, 0);
+	lv_obj_set_style_radius(gui_player_ctx.next_button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
 	lv_obj_add_event_cb(gui_player_ctx.next_button, on_next_clicked, LV_EVENT_CLICKED, NULL);
 	lv_obj_align_to(gui_player_ctx.next_button, gui_player_ctx.play_button, LV_ALIGN_OUT_RIGHT_MID, NAV_BUTTONS_SPACING_X, 0);
 
 	gui_player_ctx.next_icon = lv_label_create(gui_player_ctx.next_button);
 	lv_label_set_text(gui_player_ctx.next_icon, LV_SYMBOL_NEXT);
 	lv_obj_center(gui_player_ctx.next_icon);
+
+	gui_player_ctx.volume_slider = lv_slider_create(gui_player_ctx.tab_player);
+	lv_slider_set_range(gui_player_ctx.volume_slider, VOLUME_SLIDER_MIN_VALUE, VOLUME_SLIDER_MAX_VALUE);
+	const uint8_t initial_volume = map(GUI_VIEW_PLAYER_INITIAL_VOLUME, GUI_VIEW_PLAYER_MIN_VOLUME, GUI_VIEW_PLAYER_MAX_VOLUME, VOLUME_SLIDER_MIN_VALUE, VOLUME_SLIDER_MAX_VALUE);
+	lv_slider_set_value(gui_player_ctx.volume_slider, initial_volume, LV_ANIM_OFF);
+	lv_obj_set_size(gui_player_ctx.volume_slider, VOLUME_SLIDER_WIDTH, VOLUME_SLIDER_HEIGHT);
+	lv_obj_add_event_cb(gui_player_ctx.volume_slider, on_volume_changed, LV_EVENT_VALUE_CHANGED, NULL);
+	lv_obj_align_to(gui_player_ctx.volume_slider, gui_player_ctx.play_button, LV_ALIGN_OUT_BOTTOM_MID, 0, VOLUME_SLIDER_OFFSET_Y);
+
+	gui_player_ctx.speaker_icon = lv_label_create(gui_player_ctx.tab_player);
+	lv_label_set_text(gui_player_ctx.speaker_icon, LV_SYMBOL_VOLUME_MAX);
+	lv_obj_align_to(gui_player_ctx.speaker_icon, gui_player_ctx.volume_slider, LV_ALIGN_OUT_LEFT_MID, -SPEAKER_ICON_OFFSET_X, SPEAKER_ICON_OFFSET_Y);
 }
 
 void gui_view_player_set_on_play_callback(void (*on_play)(void))
@@ -187,11 +235,6 @@ void gui_view_player_set_on_next_callback(void (*on_next)(void))
 void gui_view_player_set_on_volume_callback(void (*on_volume)(uint8_t volume))
 {
 	gui_player_ctx.on_volume_changed = on_volume;
-}
-
-void gui_view_player_set_on_progress_callback(void (*on_progress)(uint8_t progress))
-{
-	gui_player_ctx.on_progress_changed = on_progress;
 }
 
 void gui_view_player_set_title(const char *title)

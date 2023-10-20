@@ -28,7 +28,7 @@ void player_pause(void);
 void player_resume(void);
 void player_stop(void);
 
-bool player_set_volume(int8_t volume);
+bool player_set_volume(uint8_t volume);
 
 enum player_state_t player_get_state(void);
 uint32_t player_get_elapsed_time(void);
