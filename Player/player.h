@@ -31,8 +31,8 @@ void player_stop(void);
 bool player_set_volume(int8_t volume);
 
 enum player_state_t player_get_state(void);
-size_t player_get_pcm_frames_played(void);
-size_t player_get_pcm_frames_total(void);
+uint32_t player_get_elapsed_time(void);
+uint32_t player_get_total_time(void);
 uint32_t player_get_pcm_sample_rate(void);
 uint32_t player_get_current_bitrate(void);
 

@@ -11,9 +11,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define DECODER_METADATA_FIELD_MAX_SIZE 128
+#define DECODER_METADATA_FIELD_MAX_SIZE 64
 
-struct decoder_song_metadata_t
+struct decoder_track_metadata_t
 {
 	char title[DECODER_METADATA_FIELD_MAX_SIZE + 1];
 	char album[DECODER_METADATA_FIELD_MAX_SIZE + 1];
@@ -27,10 +27,9 @@ struct decoder_interface_t
 
 	size_t (*read_pcm_frames)(int16_t *buffer, size_t frames_to_read);
 
-	size_t (*get_pcm_frames_played)(void);
-	size_t (*get_pcm_frames_total)(void);
+	uint32_t (*get_elapsed_time)(void);
+	uint32_t (*get_total_time)(void);
 	uint32_t (*get_sample_rate)(void);
-	uint32_t (*get_current_bitrate)(void);
 
-	const struct decoder_song_metadata_t *(*get_song_metadata)(void);
+	const struct decoder_track_metadata_t *(*get_track_metadata)(void);
 };

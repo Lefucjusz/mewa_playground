@@ -26,14 +26,14 @@
 #define FLAC_ARTIST_FIELD_NAME_LENGTH 6
 
 /* Internal context */
-struct decoder_ctx_t
+struct decoder_flac_ctx_t
 {
 	drflac *flac;
-	struct decoder_song_metadata_t metadata;
+	struct decoder_track_metadata_t metadata;
 	struct decoder_interface_t interface;
 };
 
-static struct decoder_ctx_t __attribute__((section(".sdram"))) flac_ctx;
+static struct decoder_flac_ctx_t __attribute__((section(".sdram"))) flac_ctx;
 
 /* Internal functions */
 static void decoder_parse_metadata(void *param, drflac_metadata *metadata)
@@ -101,14 +101,14 @@ static size_t decoder_read_pcm_frames(int16_t *buffer, size_t frames_to_read)
 	return drflac_read_pcm_frames_s16(flac_ctx.flac, frames_to_read, buffer);
 }
 
-static size_t decoder_get_pcm_frames_played(void)
+static uint32_t decoder_get_elapsed_time(void)
 {
-	return flac_ctx.flac->currentPCMFrame;
+	return (flac_ctx.flac->currentPCMFrame / flac_ctx.flac->sampleRate);
 }
 
-static size_t decoder_get_pcm_frames_total(void)
+static uint32_t decoder_get_total_time(void)
 {
-	return flac_ctx.flac->totalPCMFrameCount;
+	return (flac_ctx.flac->totalPCMFrameCount / flac_ctx.flac->sampleRate);
 }
 
 static uint32_t decoder_get_sample_rate(void)
@@ -116,12 +116,7 @@ static uint32_t decoder_get_sample_rate(void)
 	return flac_ctx.flac->sampleRate;
 }
 
-static uint32_t decoder_get_current_bitrate(void)
-{
-	return 0; // Defined only when total frame count not available
-}
-
-static const struct decoder_song_metadata_t *decoder_get_song_metadata(void)
+static const struct decoder_track_metadata_t *decoder_get_track_metadata(void)
 {
 	return &flac_ctx.metadata;
 }
@@ -132,11 +127,10 @@ const struct decoder_interface_t *decoder_flac_get_interface(void)
 	flac_ctx.interface.init = decoder_init;
 	flac_ctx.interface.deinit = decoder_deinit;
 	flac_ctx.interface.read_pcm_frames = decoder_read_pcm_frames;
-	flac_ctx.interface.get_pcm_frames_played = decoder_get_pcm_frames_played;
-	flac_ctx.interface.get_pcm_frames_total = decoder_get_pcm_frames_total;
+	flac_ctx.interface.get_elapsed_time = decoder_get_elapsed_time;
+	flac_ctx.interface.get_total_time = decoder_get_total_time;
 	flac_ctx.interface.get_sample_rate = decoder_get_sample_rate;
-	flac_ctx.interface.get_current_bitrate = decoder_get_current_bitrate;
-	flac_ctx.interface.get_song_metadata = decoder_get_song_metadata;
+	flac_ctx.interface.get_track_metadata = decoder_get_track_metadata;
 
 	return &flac_ctx.interface;
 }

@@ -30,6 +30,15 @@ inline static uint16_t bswap16(uint16_t x)
 #endif
 }
 
+inline static uint32_t bswap32(uint32_t x)
+{
+#ifdef __GNUC__
+	return __builtin_bswap32(x);
+#else
+	return (((x >> 24) & 0x000000FF) | ((x << 8) & 0x00FF0000) | ((x >> 8) & 0x0000FF00) | ((x << 24) & 0xFF000000));
+#endif
+}
+
 inline static bool is_extension(const char *filename, const char *ext)
 {
     const char *dot_ptr = strrchr(filename, '.');

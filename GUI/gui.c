@@ -44,25 +44,6 @@ static void start_playback(const char *filename)
 	free(path);
 }
 
-static uint32_t get_elapsed_time(void)
-{
-	const uint32_t pcm_sample_rate = player_get_pcm_sample_rate();
-	if (pcm_sample_rate != 0) {
-		return player_get_pcm_frames_played() / pcm_sample_rate;
-	}
-	return 0;
-}
-
-static int32_t get_total_time(void)
-{
-	const size_t frames_total = player_get_pcm_frames_total();
-	const uint32_t pcm_sample_rate = player_get_pcm_sample_rate();
-	if ((frames_total > 0) && (pcm_sample_rate > 0)) {
-		return frames_total / pcm_sample_rate;
-	}
-	return 0;
-}
-
 static void update_metadata(void)
 {
 	const char *title = player_get_track_title();
@@ -84,8 +65,8 @@ static void update_metadata(void)
 	}
 	gui_view_player_set_artist(artist);
 
-	gui_view_player_set_elapsed_time(get_elapsed_time());
-	gui_view_player_set_total_time(get_total_time());
+	gui_view_player_set_elapsed_time(player_get_elapsed_time());
+	gui_view_player_set_total_time(player_get_total_time());
 }
 
 static void on_file_clicked(const char *fs_path, dir_entry_t *entry, dir_list_t *dir_list)
@@ -110,7 +91,7 @@ static void gui_refresh(void)
 	gui_view_player_set_state(player_get_state());
 
 	if (player_get_state() == PLAYER_PLAYING) {
-		gui_view_player_set_elapsed_time(get_elapsed_time());
+		gui_view_player_set_elapsed_time(player_get_elapsed_time());
 	}
 }
 

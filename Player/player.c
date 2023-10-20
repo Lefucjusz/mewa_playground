@@ -164,51 +164,43 @@ enum player_state_t player_get_state(void)
 	return player_ctx.state;
 }
 
-size_t player_get_pcm_frames_played(void)
+uint32_t player_get_elapsed_time(void)
 {
-	if (player_ctx.decoder != NULL) {
-		return player_ctx.decoder->get_pcm_frames_played();
-	}
-	return 0;
+	//if (player_ctx.decoder != NULL) {
+		return player_ctx.decoder->get_elapsed_time();
+	//}
+	//return 0;
 }
 
-size_t player_get_pcm_frames_total(void)
+uint32_t player_get_total_time(void)
 {
-	if (player_ctx.decoder != NULL) {
-		return player_ctx.decoder->get_pcm_frames_total();
-	}
-	return 0;
+	//if (player_ctx.decoder != NULL) {
+		return player_ctx.decoder->get_total_time();
+	//}
+	//return 0;
 }
 
 uint32_t player_get_pcm_sample_rate(void)
 {
-	if (player_ctx.decoder != NULL) {
+	//if (player_ctx.decoder != NULL) {
 		return player_ctx.decoder->get_sample_rate();
-	}
-	return 0;
-}
-
-uint32_t player_get_current_bitrate(void)
-{
-	if (player_ctx.decoder != NULL) {
-		return player_ctx.decoder->get_current_bitrate();
-	}
-	return 0;
+	//}
+	//return 0;
 }
 
 const char *player_get_track_title(void)
 {
-	return player_ctx.decoder->get_song_metadata()->title;
+	return player_ctx.decoder->get_track_metadata()->title;
 }
 
 const char *player_get_track_album(void)
 {
-	return player_ctx.decoder->get_song_metadata()->album;
+	return player_ctx.decoder->get_track_metadata()->album;
 }
 
 const char *player_get_track_artist(void)
 {
-	return player_ctx.decoder->get_song_metadata()->artist;
+	return player_ctx.decoder->get_track_metadata()->artist;
 }
 
 void player_task(void)
