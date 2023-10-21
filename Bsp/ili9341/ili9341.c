@@ -14,9 +14,9 @@ static void (*dma_tx_complete_callback)(void) = NULL;
 static void ili9341_reset(void)
 {
     HAL_GPIO_WritePin(ILI9341_RESET_GPIO, ILI9341_RESET_PIN, GPIO_PIN_RESET);
-    HAL_Delay(5);
+    HAL_Delay(1);
     HAL_GPIO_WritePin(ILI9341_RESET_GPIO, ILI9341_RESET_PIN, GPIO_PIN_SET);
-    HAL_Delay(5);
+    HAL_Delay(1);
 }
 
 static void ili9341_write_command(uint8_t cmd)
@@ -36,14 +36,18 @@ void ili9341_unselect(void)
 	HAL_GPIO_WritePin(ILI9341_CS_GPIO, ILI9341_CS_PIN, GPIO_PIN_SET);
 }
 
-void ili9341_init(void) // TODO check all the commands
+void ili9341_init(void)
 {
-	ili9341_select();
+	/* Reset and select the controller */
 	ili9341_reset();
+	ili9341_select();
 
 	/* SOFTWARE RESET */
 	ili9341_write_command(0x01);
-	HAL_Delay(1000);
+	HAL_Delay(5);
+
+	/* DISPLAY OFF */
+	ili9341_write_command(0x28);
 
 	/* POWER CONTROL A */
 	ili9341_write_command(0xCB);
@@ -118,9 +122,12 @@ void ili9341_init(void) // TODO check all the commands
 	/* MEMORY ACCESS CONTROL */
 	ili9341_write_command(0x36);
 	{
-		const uint8_t data[] = {0x48};
+		const uint8_t data[] = {ILI9341_ROTATION};
 		ili9341_write_data(data, sizeof(data));
 	}
+
+	/* DISPLAY COLOR INVERSION */
+	ili9341_write_command(ILI9341_COLOR_INVERSION_OFF);
 
 	/* PIXEL FORMAT */
 	ili9341_write_command(0x3A);
@@ -146,7 +153,7 @@ void ili9341_init(void) // TODO check all the commands
 	/* 3GAMMA FUNCTION DISABLE */
 	ili9341_write_command(0xF2);
 	{
-		const uint8_t data[] = {0x00};
+		const uint8_t data[] = {0x02};
 		ili9341_write_data(data, sizeof(data));
 	}
 
@@ -180,16 +187,9 @@ void ili9341_init(void) // TODO check all the commands
 	/* TURN ON DISPLAY */
 	ili9341_write_command(0x29);
 
-	// MADCTL
-	ili9341_write_command(0x36);
-	{
-		const uint8_t data[] = {ILI9341_ROTATION};
-		ili9341_write_data(data, sizeof(data));
-	}
-
+	/* Release the controller */
 	ili9341_unselect();
 }
-
 
 void ili9341_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
@@ -252,7 +252,7 @@ void ili9341_set_dma_tx_complete_callback(void (*on_dma_tx_complete)(void))
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-	if (dma_tx_complete_callback) {
+	if (dma_tx_complete_callback != NULL) {
 		dma_tx_complete_callback();
 	}
 }

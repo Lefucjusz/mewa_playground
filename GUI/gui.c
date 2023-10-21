@@ -101,9 +101,13 @@ static void gui_refresh(void)
 
 static void on_prev_clicked(void)
 {
-	bool success = false;
+	/* Do nothing if playing directory not initialized */
+	if (gui_ctx.dirs == NULL) {
+		return;
+	}
 
 	/* Try playing all the songs until first successful */
+	bool success = false;
 	while (!success) {
 		gui_ctx.current_dir = dir_get_prev(gui_ctx.dirs, gui_ctx.current_dir);
 		success = start_playback(dir_get_fd(gui_ctx.current_dir)->fname);
@@ -116,9 +120,13 @@ static void on_prev_clicked(void)
 
 static void on_next_clicked(void)
 {
-	bool success = false;
+	/* Do nothing if playing directory not initialized */
+	if (gui_ctx.dirs == NULL) {
+		return;
+	}
 
 	/* Try playing all the songs until first successful */
+	bool success = false;
 	while (!success) {
 		gui_ctx.current_dir = dir_get_next(gui_ctx.dirs, gui_ctx.current_dir);
 		success = start_playback(dir_get_fd(gui_ctx.current_dir)->fname);
