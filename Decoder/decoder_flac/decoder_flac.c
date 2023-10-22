@@ -16,14 +16,14 @@
 #include "decoder_interface.h"
 #include "utils.h"
 
-#define FLAC_TITLE_FIELD_NAME "TITLE"
-#define FLAC_TITLE_FIELD_NAME_LENGTH 5
+#define FLAC_TITLE_FIELD_NAME "TITLE="
+#define FLAC_TITLE_FIELD_NAME_LENGTH 6
 
-#define FLAC_ALBUM_FIELD_NAME "ALBUM"
-#define FLAC_ALBUM_FIELD_NAME_LENGTH 5
+#define FLAC_ALBUM_FIELD_NAME "ALBUM="
+#define FLAC_ALBUM_FIELD_NAME_LENGTH 6
 
-#define FLAC_ARTIST_FIELD_NAME "ARTIST"
-#define FLAC_ARTIST_FIELD_NAME_LENGTH 6
+#define FLAC_ARTIST_FIELD_NAME "ARTIST="
+#define FLAC_ARTIST_FIELD_NAME_LENGTH 7
 
 /* Internal context */
 struct decoder_flac_ctx_t
@@ -66,15 +66,15 @@ static void decoder_parse_metadata(void *param, drflac_metadata *metadata)
 		raw_data += field_size; // Skip field data size
 
 		if (strncmp(buffer, FLAC_TITLE_FIELD_NAME, FLAC_TITLE_FIELD_NAME_LENGTH) == 0) {
-			strncpy(flac_ctx.metadata.title, &buffer[FLAC_TITLE_FIELD_NAME_LENGTH + 1], DECODER_METADATA_FIELD_MAX_SIZE); // +1 to skip '=' sign
+			strncpy(flac_ctx.metadata.title, &buffer[FLAC_TITLE_FIELD_NAME_LENGTH], DECODER_METADATA_FIELD_MAX_SIZE);
 			title_set = true;
 		}
 		else if (strncmp(buffer, FLAC_ALBUM_FIELD_NAME, FLAC_ALBUM_FIELD_NAME_LENGTH) == 0) {
-			strncpy(flac_ctx.metadata.album, &buffer[FLAC_ALBUM_FIELD_NAME_LENGTH + 1], DECODER_METADATA_FIELD_MAX_SIZE);
+			strncpy(flac_ctx.metadata.album, &buffer[FLAC_ALBUM_FIELD_NAME_LENGTH], DECODER_METADATA_FIELD_MAX_SIZE);
 			album_set = true;
 		}
 		else if (strncmp(buffer, FLAC_ARTIST_FIELD_NAME, FLAC_ARTIST_FIELD_NAME_LENGTH) == 0) {
-			strncpy(flac_ctx.metadata.artist, &buffer[FLAC_ARTIST_FIELD_NAME_LENGTH + 1], DECODER_METADATA_FIELD_MAX_SIZE);
+			strncpy(flac_ctx.metadata.artist, &buffer[FLAC_ARTIST_FIELD_NAME_LENGTH], DECODER_METADATA_FIELD_MAX_SIZE);
 			artist_set = true;
 		}
 

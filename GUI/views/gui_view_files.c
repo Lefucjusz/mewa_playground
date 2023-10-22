@@ -13,9 +13,16 @@
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
+#define DIR_PATH_LABEL_OFFSET_X 12
+#define DIR_PATH_LABEL_OFFSET_Y 3
+#define DIR_PATH_LABEL_WIDTH (GUI_TAB_WIDTH - 2 * DIR_PATH_LABEL_OFFSET_X)
+#define DIR_PATH_LABEL_HEIGHT 16
+#define LIST_HEIGHT (GUI_SCREEN_HEIGHT - (DIR_PATH_LABEL_HEIGHT + DIR_PATH_LABEL_OFFSET_Y))
+
 struct gui_files_ctx_t
 {
 	lv_obj_t *tab_files;
+	lv_obj_t *dir_path_label;
 	lv_obj_t *list_files;
 	dir_list_t *dirs_shown;
 	dir_list_t *dirs_played;
@@ -48,10 +55,17 @@ void gui_view_files_create(lv_obj_t *sidebar)
 	lv_obj_set_style_pad_top(gui_files_ctx.tab_files, 0, 0);
 	lv_obj_clear_flag(gui_files_ctx.tab_files, LV_OBJ_FLAG_SCROLLABLE);
 
+	/* Create directory path label */
+	gui_files_ctx.dir_path_label = lv_label_create(gui_files_ctx.tab_files);
+	lv_label_set_long_mode(gui_files_ctx.dir_path_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+	lv_obj_set_size(gui_files_ctx.dir_path_label, DIR_PATH_LABEL_WIDTH, DIR_PATH_LABEL_HEIGHT);
+	lv_obj_align(gui_files_ctx.dir_path_label, LV_ALIGN_TOP_LEFT, DIR_PATH_LABEL_OFFSET_X, DIR_PATH_LABEL_OFFSET_Y);
+
 	/* Create files list */
 	gui_files_ctx.list_files = lv_list_create(gui_files_ctx.tab_files);
-	lv_obj_set_size(gui_files_ctx.list_files, GUI_TAB_WIDTH, GUI_SCREEN_HEIGHT);
+	lv_obj_set_size(gui_files_ctx.list_files, GUI_TAB_WIDTH, LIST_HEIGHT);
 	lv_obj_set_style_radius(gui_files_ctx.list_files, GUI_BASE_CORNER_RADIUS, LV_PART_MAIN);
+	lv_obj_align_to(gui_files_ctx.list_files, gui_files_ctx.dir_path_label, LV_ALIGN_OUT_BOTTOM_LEFT, -DIR_PATH_LABEL_OFFSET_X, 0);
 
 	reload_list();
 }
@@ -120,6 +134,9 @@ static void on_unsupported_file_click(lv_event_t *event)
 
 static void reload_list()
 {
+	/* Set directory path label */
+	lv_label_set_text(gui_files_ctx.dir_path_label, dir_get_fs_path());
+
 	/* Delete list if not used in playback */
 	if (gui_files_ctx.dirs_played != gui_files_ctx.dirs_shown) {
 		dir_list_free(gui_files_ctx.dirs_shown);
@@ -130,9 +147,6 @@ static void reload_list()
 
 	/* Create new files list */
 	gui_files_ctx.dirs_shown = dir_list();
-
-	/* Create directory path label */
-	lv_list_add_text(gui_files_ctx.list_files, dir_get_fs_path()); // TODO this should not move
 
 	/* Create directory up button */
 	lv_obj_t *button;

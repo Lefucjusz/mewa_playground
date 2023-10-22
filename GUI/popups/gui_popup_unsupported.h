@@ -7,6 +7,4 @@
 
 #pragma once
 
-#include "lvgl.h"
-
 void gui_popup_unsupported_create(const char *filename);

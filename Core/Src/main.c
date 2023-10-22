@@ -137,15 +137,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 //  i2cmux_init();
+  const bool mount_ok = (f_mount(&fatfs, mount_point, 1) == FR_OK);
+
   cs4270_init();
-
-  FRESULT ret = f_mount(&fatfs, mount_point, 1);
-  if (ret) {
-	  while (1);
-  }
-
   player_init(&hi2s1, &hi2c1);
-  gui_init();
+  gui_init(mount_ok);
 
   /* USER CODE END 2 */
 

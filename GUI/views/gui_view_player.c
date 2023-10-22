@@ -12,7 +12,6 @@
 
 /* TODO:
  * - add styles
- * - scrolling of too long names
  */
 
 #define PLAYER_TAB_MARGIN_X 20

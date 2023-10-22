@@ -9,14 +9,11 @@
 #include "gui_view_player.h"
 #include "gui_view_files.h"
 #include "gui_dimensions.h"
+#include "gui_popup_mount_failed.h"
 #include "lvgl_init.h"
 #include "player.h"
 #include <stdio.h>
 #include <limits.h>
-
-/* TODO:
- * - handle error code from player_start and show error
- */
 
 #define GUI_TAB_FILES_ID 0
 #define GUI_TAB_PLAYER_ID 1
@@ -179,10 +176,16 @@ static void on_player_stopped(void)
 	}
 }
 
-void gui_init(void)
+void gui_init(bool mount_ok)
 {
 	memset(&gui_ctx, 0, sizeof(gui_ctx));
 	lvgl_init();
+
+	/* If mounting has failed, just display a popup */
+	if (!mount_ok) {
+		gui_popup_mount_failed_create();
+		return;
+	}
 
 	/* Create sidebar */
 	gui_ctx.sidebar = lv_tabview_create(lv_scr_act(), LV_DIR_LEFT, GUI_SIDEBAR_WIDTH);
